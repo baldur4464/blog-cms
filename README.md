@@ -163,6 +163,13 @@ All significant design decisions are documented as Architecture Decision Records
 | [ADR-007](docs/adr/ADR-007.md) | Content/presentation separation |
 | [ADR-008](docs/adr/ADR-008.md) | Media storage strategy |
 | [ADR-009](docs/adr/ADR-009.md) | System bootstrap & initial admin |
+| [ADR-010](docs/adr/ADR-010.md) | Database schema & Flyway conventions |
+| [ADR-011](docs/adr/ADR-011.md) | Slug generation & uniqueness |
+| [ADR-012](docs/adr/ADR-012.md) | DTO & mapping strategy |
+| [ADR-013](docs/adr/ADR-013.md) | Post status transitions & permissions |
+| [ADR-014](docs/adr/ADR-014.md) | JWT details & refresh token persistence |
+| [ADR-015](docs/adr/ADR-015.md) | Error & validation catalog |
+| [ADR-016](docs/adr/ADR-016.md) | Configuration & Spring profiles |
 
 ---
 
