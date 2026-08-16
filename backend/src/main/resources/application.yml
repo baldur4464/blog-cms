@@ -27,6 +27,11 @@ spring:
       max-file-size: 10MB
       max-request-size: 12MB
 
+  messages:
+    basename: messages
+    encoding: UTF-8
+    fallback-to-system-locale: false
+
 server:
   port: 8080
 
@@ -55,6 +60,12 @@ app:
       username: ${BOOTSTRAP_ADMIN_USERNAME:admin}
       email: ${BOOTSTRAP_ADMIN_EMAIL:admin@example.com}
       password: ${BOOTSTRAP_ADMIN_PASSWORD:changeme}
+
+  i18n:
+    default-locale: de
+    supported-locales:
+      - de
+      - en
 
 springdoc:
   api-docs:
