@@ -38,6 +38,7 @@ node_modules/
 dist/
 dist-ssr/
 *.local
+yarn.lock
 
 # ─────────────────────────────────────────
 #  Vite
@@ -97,7 +98,7 @@ desktop.ini
 .docker/
 
 # ─────────────────────────────────────────
-#  Media Uploads (lokal – siehe ADR-008)
+#  File Uploads (lokal – siehe ADR-008)
 # ─────────────────────────────────────────
 uploads/
-media/
+storage/
