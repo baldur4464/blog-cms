@@ -8,11 +8,14 @@ import java.util.UUID;
 
 public record PostDetailResponse(
         UUID id,
+        String locale,
+        UUID translationGroupId,
         String title,
         String slug,
         String excerpt,
         String content,
         String status,
+        List<TranslationRef> availableTranslations,
         String authorUsername,
         UUID categoryId,
         String categoryName,
@@ -22,14 +25,24 @@ public record PostDetailResponse(
         Instant createdAt,
         Instant updatedAt
 ) {
-    public static PostDetailResponse from(Post post) {
+    /** Verweis auf eine Sprachversion derselben Übersetzungsgruppe (ADR-018 Kapitel 9). */
+    public record TranslationRef(String locale, String slug) {}
+
+    public static PostDetailResponse from(Post post, List<Post> groupSiblings) {
+        List<TranslationRef> translations = groupSiblings.stream()
+                .sorted((a, b) -> a.getLocale().compareTo(b.getLocale()))
+                .map(p -> new TranslationRef(p.getLocale(), p.getSlug()))
+                .toList();
         return new PostDetailResponse(
                 post.getId(),
+                post.getLocale(),
+                post.getTranslationGroupId(),
                 post.getTitle(),
                 post.getSlug(),
                 post.getExcerpt(),
                 post.getContent(),
                 post.getStatus().name(),
+                translations,
                 post.getAuthor().getUsername(),
                 post.getCategory() != null ? post.getCategory().getId() : null,
                 post.getCategory() != null ? post.getCategory().getName() : null,

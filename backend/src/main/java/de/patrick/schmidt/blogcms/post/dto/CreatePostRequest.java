@@ -10,6 +10,8 @@ public record CreatePostRequest(
         @NotBlank @Size(max = 200) String title,
         @NotBlank String content,
         @Size(max = 500) String excerpt,
+        @NotBlank String locale,
+        UUID translationOf,
         UUID categoryId,
         List<UUID> tagIds
 ) {}

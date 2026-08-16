@@ -9,6 +9,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Locale;
+
 @RestController
 @RequestMapping("/api/public/v1/posts")
 @RequiredArgsConstructor
@@ -22,13 +24,15 @@ public class PostPublicController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "publishedAt,desc") String sort,
             @RequestParam(required = false) String category,
-            @RequestParam(required = false) String tag) {
-        return ResponseEntity.ok(postService.findPublished(category, tag, PageRequest.of(page, size, parseSort(sort))));
+            @RequestParam(required = false) String tag,
+            Locale locale) {
+        return ResponseEntity.ok(
+                postService.findPublished(category, tag, locale.toLanguageTag(), PageRequest.of(page, size, parseSort(sort))));
     }
 
     @GetMapping("/{slug}")
-    public ResponseEntity<PostDetailResponse> getBySlug(@PathVariable String slug) {
-        return ResponseEntity.ok(postService.findPublishedBySlug(slug));
+    public ResponseEntity<PostDetailResponse> getBySlug(@PathVariable String slug, Locale locale) {
+        return ResponseEntity.ok(postService.findPublishedBySlug(slug, locale.toLanguageTag()));
     }
 
     private Sort parseSort(String sort) {

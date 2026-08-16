@@ -10,6 +10,7 @@ import lombok.*;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "posts")
@@ -20,10 +21,16 @@ import java.util.List;
 @Builder
 public class Post extends BaseEntity {
 
+    @Column(nullable = false, length = 35)
+    private String locale;
+
+    @Column(name = "translation_group_id", nullable = false)
+    private UUID translationGroupId;
+
     @Column(nullable = false, length = 255)
     private String title;
 
-    @Column(nullable = false, unique = true, length = 280)
+    @Column(nullable = false, length = 280)
     private String slug;
 
     @Column(length = 500)

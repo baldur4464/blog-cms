@@ -5,7 +5,9 @@ import de.patrick.schmidt.blogcms.category.CategoryRepository;
 import de.patrick.schmidt.blogcms.common.PageResponse;
 import de.patrick.schmidt.blogcms.common.SlugUtils;
 import de.patrick.schmidt.blogcms.common.exception.BusinessException;
+import de.patrick.schmidt.blogcms.common.exception.ConflictException;
 import de.patrick.schmidt.blogcms.common.exception.ResourceNotFoundException;
+import de.patrick.schmidt.blogcms.i18n.LocaleService;
 import de.patrick.schmidt.blogcms.post.dto.*;
 import de.patrick.schmidt.blogcms.post.event.PostArchivedEvent;
 import de.patrick.schmidt.blogcms.post.event.PostPublishedEvent;
@@ -22,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 @Service
@@ -31,30 +34,31 @@ public class PostService {
     private final PostRepository postRepository;
     private final CategoryRepository categoryRepository;
     private final TagRepository tagRepository;
+    private final LocaleService localeService;
     private final ApplicationEventPublisher eventPublisher;
 
     // ── Public API ──────────────────────────────────────────────────────────
 
     @Transactional(readOnly = true)
-    public PageResponse<PostSummaryResponse> findPublished(String categorySlug, String tagSlug, Pageable pageable) {
+    public PageResponse<PostSummaryResponse> findPublished(String categorySlug, String tagSlug, String locale, Pageable pageable) {
         if (categorySlug != null) {
             return PageResponse.from(
-                    postRepository.findAllByStatusAndCategory_Slug(PostStatus.PUBLISHED, categorySlug, pageable),
+                    postRepository.findAllByStatusAndLocaleAndCategory_Slug(PostStatus.PUBLISHED, locale, categorySlug, pageable),
                     PostSummaryResponse::from);
         }
         if (tagSlug != null) {
             return PageResponse.from(
-                    postRepository.findAllByStatusAndTags_Slug(PostStatus.PUBLISHED, tagSlug, pageable),
+                    postRepository.findAllByStatusAndLocaleAndTags_Slug(PostStatus.PUBLISHED, locale, tagSlug, pageable),
                     PostSummaryResponse::from);
         }
-        return PageResponse.from(postRepository.findAllByStatus(PostStatus.PUBLISHED, pageable), PostSummaryResponse::from);
+        return PageResponse.from(postRepository.findAllByStatusAndLocale(PostStatus.PUBLISHED, locale, pageable), PostSummaryResponse::from);
     }
 
     @Transactional(readOnly = true)
-    public PostDetailResponse findPublishedBySlug(String slug) {
-        Post post = postRepository.findBySlugAndStatus(slug, PostStatus.PUBLISHED)
+    public PostDetailResponse findPublishedBySlug(String slug, String locale) {
+        Post post = postRepository.findBySlugAndLocaleAndStatus(slug, locale, PostStatus.PUBLISHED)
                 .orElseThrow(() -> new ResourceNotFoundException("Post not found: " + slug));
-        return PostDetailResponse.from(post);
+        return toPublicDetail(post);
     }
 
     // ── Admin API ────────────────────────────────────────────────────────────
@@ -66,15 +70,20 @@ public class PostService {
 
     @Transactional(readOnly = true)
     public PostDetailResponse findById(UUID id) {
-        return PostDetailResponse.from(getOrThrow(id));
+        return toDetail(getOrThrow(id));
     }
 
     @Transactional
     public PostDetailResponse create(CreatePostRequest request, User author) {
+        String locale = requireSupportedLocale(request.locale());
+        UUID groupId = resolveTranslationGroup(request.translationOf(), locale);
+
         String baseSlug = SlugUtils.toSlugOrFallback(request.title(), UUID.randomUUID().toString());
-        String slug = resolveUniqueSlug(baseSlug);
+        String slug = resolveUniqueSlug(baseSlug, locale);
 
         Post post = Post.builder()
+                .locale(locale)
+                .translationGroupId(groupId)
                 .title(request.title())
                 .slug(slug)
                 .excerpt(request.excerpt())
@@ -85,7 +94,7 @@ public class PostService {
                 .tags(resolveTags(request.tagIds()))
                 .build();
 
-        return PostDetailResponse.from(postRepository.save(post));
+        return toDetail(postRepository.save(post));
     }
 
     @Transactional
@@ -99,7 +108,7 @@ public class PostService {
         post.setCategory(resolveCategory(request.categoryId()));
         post.setTags(resolveTags(request.tagIds()));
 
-        return PostDetailResponse.from(postRepository.save(post));
+        return toDetail(postRepository.save(post));
     }
 
     @Transactional
@@ -122,7 +131,7 @@ public class PostService {
             eventPublisher.publishEvent(new PostArchivedEvent(saved));
         }
 
-        return PostDetailResponse.from(saved);
+        return toDetail(saved);
     }
 
     @Transactional
@@ -132,16 +141,47 @@ public class PostService {
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
+    private PostDetailResponse toDetail(Post post) {
+        return PostDetailResponse.from(post, postRepository.findByTranslationGroupId(post.getTranslationGroupId()));
+    }
+
+    private PostDetailResponse toPublicDetail(Post post) {
+        return PostDetailResponse.from(post,
+                postRepository.findByTranslationGroupIdAndStatus(post.getTranslationGroupId(), PostStatus.PUBLISHED));
+    }
+
+    private String requireSupportedLocale(String tag) {
+        return localeService.match(tag)
+                .map(Locale::toLanguageTag)
+                .orElseThrow(() -> new BusinessException("Unsupported locale: " + tag));
+    }
+
+    /** Resolves the translation group and guards against a duplicate locale (ADR-018 Kapitel 10). */
+    private UUID resolveTranslationGroup(UUID translationOf, String locale) {
+        if (translationOf == null) {
+            return UUID.randomUUID();
+        }
+        UUID groupId = postRepository.findById(translationOf)
+                .map(Post::getTranslationGroupId)
+                .orElse(translationOf);
+        boolean localeTaken = postRepository.findByTranslationGroupId(groupId).stream()
+                .anyMatch(p -> p.getLocale().equals(locale));
+        if (localeTaken) {
+            throw new ConflictException("Translation for locale '" + locale + "' already exists in this group");
+        }
+        return groupId;
+    }
+
     private void checkOwnershipForAuthor(Post post, User actor) {
         if (actor.getRole() == Role.AUTHOR && !post.getAuthor().getId().equals(actor.getId())) {
             throw new BusinessException("Authors can only edit their own posts");
         }
     }
 
-    private String resolveUniqueSlug(String base) {
+    private String resolveUniqueSlug(String base, String locale) {
         String slug = base;
         int counter = 2;
-        while (postRepository.existsBySlug(slug)) {
+        while (postRepository.existsBySlugAndLocale(slug, locale)) {
             slug = base + "-" + counter++;
         }
         return slug;

@@ -7,6 +7,7 @@ import java.util.UUID;
 
 public record PostSummaryResponse(
         UUID id,
+        String locale,
         String title,
         String slug,
         String excerpt,
@@ -20,6 +21,7 @@ public record PostSummaryResponse(
     public static PostSummaryResponse from(Post post) {
         return new PostSummaryResponse(
                 post.getId(),
+                post.getLocale(),
                 post.getTitle(),
                 post.getSlug(),
                 post.getExcerpt(),
