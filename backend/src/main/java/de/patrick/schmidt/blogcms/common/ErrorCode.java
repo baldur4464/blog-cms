@@ -1,0 +1,15 @@
+package de.patrick.schmidt.blogcms.common;
+
+public enum ErrorCode {
+    VALIDATION_FAILED,
+    MALFORMED_REQUEST,
+    UNAUTHENTICATED,
+    TOKEN_EXPIRED,
+    FORBIDDEN,
+    NOT_FOUND,
+    DUPLICATE_RESOURCE,
+    STATUS_TRANSITION_INVALID,
+    PAYLOAD_TOO_LARGE,
+    UNSUPPORTED_MEDIA_TYPE,
+    INTERNAL_ERROR
+}
