@@ -28,7 +28,7 @@ public record PostDetailResponse(
     /** Verweis auf eine Sprachversion derselben Übersetzungsgruppe (ADR-018 Kapitel 9). */
     public record TranslationRef(String locale, String slug) {}
 
-    public static PostDetailResponse from(Post post, List<Post> groupSiblings) {
+    public static PostDetailResponse from(Post post, List<Post> groupSiblings, String categoryName) {
         List<TranslationRef> translations = groupSiblings.stream()
                 .sorted((a, b) -> a.getLocale().compareTo(b.getLocale()))
                 .map(p -> new TranslationRef(p.getLocale(), p.getSlug()))
@@ -45,7 +45,7 @@ public record PostDetailResponse(
                 translations,
                 post.getAuthor().getUsername(),
                 post.getCategory() != null ? post.getCategory().getId() : null,
-                post.getCategory() != null ? post.getCategory().getName() : null,
+                categoryName,
                 post.getTags().stream().map(t -> t.getId()).toList(),
                 post.getTags().stream().map(t -> t.getName()).toList(),
                 post.getPublishedAt(),

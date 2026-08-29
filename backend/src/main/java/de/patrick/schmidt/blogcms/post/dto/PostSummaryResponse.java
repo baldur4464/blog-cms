@@ -18,7 +18,7 @@ public record PostSummaryResponse(
         Instant createdAt,
         Instant updatedAt
 ) {
-    public static PostSummaryResponse from(Post post) {
+    public static PostSummaryResponse from(Post post, String categoryName) {
         return new PostSummaryResponse(
                 post.getId(),
                 post.getLocale(),
@@ -27,7 +27,7 @@ public record PostSummaryResponse(
                 post.getExcerpt(),
                 post.getStatus().name(),
                 post.getAuthor().getUsername(),
-                post.getCategory() != null ? post.getCategory().getName() : null,
+                categoryName,
                 post.getPublishedAt(),
                 post.getCreatedAt(),
                 post.getUpdatedAt()

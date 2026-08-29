@@ -1,11 +1,18 @@
 package de.patrick.schmidt.blogcms.category.dto;
 
-import de.patrick.schmidt.blogcms.category.Category;
-
+import java.util.List;
 import java.util.UUID;
 
-public record CategoryResponse(UUID id, String name, String slug, String description) {
-    public static CategoryResponse from(Category c) {
-        return new CategoryResponse(c.getId(), c.getName(), c.getSlug(), c.getDescription());
-    }
-}
+/**
+ * Lokalisierte Kategorie-Darstellung (ADR-018 Kapitel 9).
+ * {@code translated=false} signalisiert, dass auf die Default-Locale zurückgefallen wurde.
+ */
+public record CategoryResponse(
+        UUID id,
+        String locale,
+        String name,
+        String slug,
+        String description,
+        boolean translated,
+        List<String> availableLocales
+) {}

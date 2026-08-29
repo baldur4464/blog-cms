@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Locale;
 
 @RestController
 @RequestMapping("/api/public/v1/categories")
@@ -15,7 +16,7 @@ public class CategoryPublicController {
     private final CategoryService categoryService;
 
     @GetMapping
-    public ResponseEntity<List<CategoryResponse>> list() {
-        return ResponseEntity.ok(categoryService.findAll());
+    public ResponseEntity<List<CategoryResponse>> list(Locale locale) {
+        return ResponseEntity.ok(categoryService.findAllLocalized(locale.toLanguageTag()));
     }
 }

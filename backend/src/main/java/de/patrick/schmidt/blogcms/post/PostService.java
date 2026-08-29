@@ -2,6 +2,8 @@ package de.patrick.schmidt.blogcms.post;
 
 import de.patrick.schmidt.blogcms.category.Category;
 import de.patrick.schmidt.blogcms.category.CategoryRepository;
+import de.patrick.schmidt.blogcms.category.CategoryTranslation;
+import de.patrick.schmidt.blogcms.category.CategoryTranslationRepository;
 import de.patrick.schmidt.blogcms.common.PageResponse;
 import de.patrick.schmidt.blogcms.common.SlugUtils;
 import de.patrick.schmidt.blogcms.common.exception.BusinessException;
@@ -17,6 +19,7 @@ import de.patrick.schmidt.blogcms.user.Role;
 import de.patrick.schmidt.blogcms.user.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,7 +28,9 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +38,7 @@ public class PostService {
 
     private final PostRepository postRepository;
     private final CategoryRepository categoryRepository;
+    private final CategoryTranslationRepository categoryTranslationRepository;
     private final TagRepository tagRepository;
     private final LocaleService localeService;
     private final ApplicationEventPublisher eventPublisher;
@@ -42,16 +48,21 @@ public class PostService {
     @Transactional(readOnly = true)
     public PageResponse<PostSummaryResponse> findPublished(String categorySlug, String tagSlug, String locale, Pageable pageable) {
         if (categorySlug != null) {
+            Optional<UUID> categoryId = categoryTranslationRepository.findByLocaleAndSlug(locale, categorySlug)
+                    .map(t -> t.getCategory().getId());
+            if (categoryId.isEmpty()) {
+                return PageResponse.from(Page.empty(pageable), summaryMapper());
+            }
             return PageResponse.from(
-                    postRepository.findAllByStatusAndLocaleAndCategory_Slug(PostStatus.PUBLISHED, locale, categorySlug, pageable),
-                    PostSummaryResponse::from);
+                    postRepository.findAllByStatusAndLocaleAndCategory_Id(PostStatus.PUBLISHED, locale, categoryId.get(), pageable),
+                    summaryMapper());
         }
         if (tagSlug != null) {
             return PageResponse.from(
                     postRepository.findAllByStatusAndLocaleAndTags_Slug(PostStatus.PUBLISHED, locale, tagSlug, pageable),
-                    PostSummaryResponse::from);
+                    summaryMapper());
         }
-        return PageResponse.from(postRepository.findAllByStatusAndLocale(PostStatus.PUBLISHED, locale, pageable), PostSummaryResponse::from);
+        return PageResponse.from(postRepository.findAllByStatusAndLocale(PostStatus.PUBLISHED, locale, pageable), summaryMapper());
     }
 
     @Transactional(readOnly = true)
@@ -65,7 +76,7 @@ public class PostService {
 
     @Transactional(readOnly = true)
     public PageResponse<PostSummaryResponse> findAll(Pageable pageable) {
-        return PageResponse.from(postRepository.findAll(pageable), PostSummaryResponse::from);
+        return PageResponse.from(postRepository.findAll(pageable), summaryMapper());
     }
 
     @Transactional(readOnly = true)
@@ -141,13 +152,32 @@ public class PostService {
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
+    private Function<Post, PostSummaryResponse> summaryMapper() {
+        return p -> PostSummaryResponse.from(p, categoryLabel(p));
+    }
+
     private PostDetailResponse toDetail(Post post) {
-        return PostDetailResponse.from(post, postRepository.findByTranslationGroupId(post.getTranslationGroupId()));
+        return PostDetailResponse.from(post,
+                postRepository.findByTranslationGroupId(post.getTranslationGroupId()), categoryLabel(post));
     }
 
     private PostDetailResponse toPublicDetail(Post post) {
         return PostDetailResponse.from(post,
-                postRepository.findByTranslationGroupIdAndStatus(post.getTranslationGroupId(), PostStatus.PUBLISHED));
+                postRepository.findByTranslationGroupIdAndStatus(post.getTranslationGroupId(), PostStatus.PUBLISHED),
+                categoryLabel(post));
+    }
+
+    /** Lokalisiertes Kategorie-Label in der Sprache des Posts, sonst Default-Locale (ADR-018 Kapitel 9). */
+    private String categoryLabel(Post post) {
+        if (post.getCategory() == null) {
+            return null;
+        }
+        UUID categoryId = post.getCategory().getId();
+        String def = localeService.getDefaultLocale().toLanguageTag();
+        return categoryTranslationRepository.findByCategory_IdAndLocale(categoryId, post.getLocale())
+                .or(() -> categoryTranslationRepository.findByCategory_IdAndLocale(categoryId, def))
+                .map(CategoryTranslation::getName)
+                .orElse(null);
     }
 
     private String requireSupportedLocale(String tag) {

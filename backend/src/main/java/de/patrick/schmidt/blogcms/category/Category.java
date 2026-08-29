@@ -4,6 +4,13 @@ import de.patrick.schmidt.blogcms.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Sprachneutrale Kategorie-Identität (ADR-018 Kapitel 6).
+ * Übersetzbare Felder (name/slug/description) liegen in {@link CategoryTranslation}.
+ */
 @Entity
 @Table(name = "categories")
 @Getter
@@ -13,12 +20,7 @@ import lombok.*;
 @Builder
 public class Category extends BaseEntity {
 
-    @Column(nullable = false, unique = true, length = 100)
-    private String name;
-
-    @Column(nullable = false, unique = true, length = 120)
-    private String slug;
-
-    @Column(length = 500)
-    private String description;
+    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<CategoryTranslation> translations = new ArrayList<>();
 }
