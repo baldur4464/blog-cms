@@ -1,10 +1,12 @@
 import { type FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from './AuthContext';
 
 export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -18,7 +20,7 @@ export default function LoginPage() {
       await login(username, password);
       navigate('/posts');
     } catch {
-      setError('Ungültige Anmeldedaten.');
+      setError(t('login.invalid'));
     } finally {
       setLoading(false);
     }
@@ -30,7 +32,7 @@ export default function LoginPage() {
         <h1 className="text-2xl font-semibold text-gray-900 mb-6 text-center">Blog CMS</h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Benutzername</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('login.username')}</label>
             <input
               type="text"
               value={username}
@@ -41,7 +43,7 @@ export default function LoginPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Passwort</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('login.password')}</label>
             <input
               type="password"
               value={password}
@@ -56,7 +58,7 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium py-2 rounded-lg text-sm transition-colors"
           >
-            {loading ? 'Anmelden…' : 'Anmelden'}
+            {loading ? t('login.submitting') : t('login.submit')}
           </button>
         </form>
       </div>

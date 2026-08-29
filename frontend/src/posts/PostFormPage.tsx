@@ -1,20 +1,13 @@
 import { type FormEvent, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { postsApi, type PostStatus, type UpdatePostRequest } from '../api/posts';
 import { categoriesApi } from '../api/categories';
 import { tagsApi } from '../api/tags';
 import { useAuth } from '../auth/AuthContext';
 import { useToast } from '../components/Toast';
 import { SUPPORTED_LOCALES } from '../i18n';
-
-const STATUS_LABELS: Record<PostStatus, string> = {
-  DRAFT: 'Entwurf',
-  REVIEW: 'Review',
-  PUBLISHED: 'Veröffentlicht',
-  ARCHIVED: 'Archiviert',
-};
 
 function allowedTransitions(current: PostStatus, role: string): PostStatus[] {
   const isEditor = role === 'ADMIN' || role === 'EDITOR';
@@ -39,7 +32,7 @@ export default function PostFormPage() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { showToast } = useToast();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const [title, setTitle] = useState('');
   const [excerpt, setExcerpt] = useState('');
@@ -79,12 +72,12 @@ export default function PostFormPage() {
     mutationFn: postsApi.create,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['posts'] });
-      showToast('Beitrag erfolgreich erstellt.');
+      showToast(t('postForm.created'));
       navigate('/posts');
     },
     onError: () => {
-      showToast('Fehler beim Erstellen des Beitrags.', 'error');
-      setError('Fehler beim Speichern.');
+      showToast(t('postForm.createError'), 'error');
+      setError(t('postForm.saveError'));
     },
   });
 
@@ -94,11 +87,11 @@ export default function PostFormPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['posts'] });
       queryClient.invalidateQueries({ queryKey: ['post', id] });
-      showToast('Beitrag gespeichert.');
+      showToast(t('postForm.saved'));
     },
     onError: () => {
-      showToast('Fehler beim Speichern.', 'error');
-      setError('Fehler beim Speichern.');
+      showToast(t('postForm.saveError'), 'error');
+      setError(t('postForm.saveError'));
     },
   });
 
@@ -108,11 +101,11 @@ export default function PostFormPage() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['post', id] });
       queryClient.invalidateQueries({ queryKey: ['posts'] });
-      showToast(`Status geändert zu: ${STATUS_LABELS[data.status]}.`);
+      showToast(t('postForm.statusChanged', { status: t(`status.${data.status}`) }));
     },
     onError: () => {
-      showToast('Statuswechsel nicht erlaubt.', 'error');
-      setError('Statuswechsel nicht erlaubt.');
+      showToast(t('postForm.statusError'), 'error');
+      setError(t('postForm.statusError'));
     },
   });
 
@@ -149,14 +142,14 @@ export default function PostFormPage() {
           onClick={() => navigate('/posts')}
           className="text-sm text-gray-500 hover:text-gray-700"
         >
-          ← Zurück
+          {t('common.back')}
         </button>
         <h1 className="text-xl font-semibold text-gray-900">
-          {isEdit ? 'Beitrag bearbeiten' : 'Neuer Beitrag'}
+          {isEdit ? t('postForm.editTitle') : t('postForm.newTitle')}
         </h1>
         {post && (
           <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full">
-            {STATUS_LABELS[post.status]}
+            {t(`status.${post.status}`)}
           </span>
         )}
       </div>
@@ -167,7 +160,7 @@ export default function PostFormPage() {
 
       <form onSubmit={handleSubmit} className="space-y-5">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Titel *</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('postForm.fieldTitle')}</label>
           <input
             type="text"
             value={title}
@@ -179,7 +172,7 @@ export default function PostFormPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Zusammenfassung</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('postForm.fieldExcerpt')}</label>
           <input
             type="text"
             value={excerpt}
@@ -191,7 +184,7 @@ export default function PostFormPage() {
 
         {!isEdit && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Sprache / Language *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('postForm.fieldLanguage')}</label>
             <select
               value={locale}
               onChange={(e) => setLocale(e.target.value)}
@@ -208,13 +201,13 @@ export default function PostFormPage() {
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Kategorie</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('postForm.fieldCategory')}</label>
             <select
               value={categoryId}
               onChange={(e) => setCategoryId(e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">Keine Kategorie</option>
+              <option value="">{t('postForm.noCategory')}</option>
               {categories.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -224,7 +217,7 @@ export default function PostFormPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Tags</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('postForm.fieldTags')}</label>
             <div className="border border-gray-300 rounded-lg px-3 py-2 flex flex-wrap gap-1.5 min-h-[38px]">
               {tags.map((tag) => (
                 <button
@@ -246,7 +239,7 @@ export default function PostFormPage() {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Inhalt * <span className="text-gray-400 font-normal">(Markdown)</span>
+            {t('postForm.fieldContent')} <span className="text-gray-400 font-normal">{t('postForm.contentHint')}</span>
           </label>
           <textarea
             value={content}
@@ -263,7 +256,7 @@ export default function PostFormPage() {
             disabled={isSaving}
             className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors"
           >
-            {isSaving ? 'Speichern…' : 'Speichern'}
+            {isSaving ? t('common.saving') : t('common.save')}
           </button>
 
           {isEdit && post && (
@@ -277,11 +270,13 @@ export default function PostFormPage() {
               className="text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <option value="">
-                {statusMutation.isPending ? 'Wird geändert…' : `Status: ${STATUS_LABELS[post.status]}`}
+                {statusMutation.isPending
+                  ? t('postForm.statusChanging')
+                  : t('postForm.statusPlaceholder', { status: t(`status.${post.status}`) })}
               </option>
               {transitions.map((s) => (
                 <option key={s} value={s}>
-                  → {STATUS_LABELS[s]}
+                  → {t(`status.${s}`)}
                 </option>
               ))}
             </select>
@@ -292,7 +287,7 @@ export default function PostFormPage() {
             onClick={() => navigate('/posts')}
             className="text-sm text-gray-500 hover:text-gray-700 px-3 py-2"
           >
-            Abbrechen
+            {t('common.cancel')}
           </button>
         </div>
       </form>

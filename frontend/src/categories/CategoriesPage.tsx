@@ -1,4 +1,5 @@
 import { type FormEvent, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { categoriesApi, type CategoryResponse } from '../api/categories';
 import { useToast } from '../components/Toast';
@@ -13,6 +14,7 @@ const emptyForm: FormState = { name: '', description: '' };
 export default function CategoriesPage() {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
+  const { t, i18n } = useTranslation();
   const [editing, setEditing] = useState<CategoryResponse | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [showForm, setShowForm] = useState(false);
@@ -27,26 +29,26 @@ export default function CategoriesPage() {
     mutationFn: categoriesApi.create,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories-public'] });
-      showToast('Kategorie erstellt.');
+      showToast(t('categories.created'));
       resetForm();
     },
     onError: () => {
-      showToast('Name bereits vergeben.', 'error');
-      setError('Name bereits vergeben.');
+      showToast(t('categories.nameTaken'), 'error');
+      setError(t('categories.nameTaken'));
     },
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: FormState }) =>
-      categoriesApi.update(id, data),
+      categoriesApi.upsertTranslation(id, i18n.resolvedLanguage ?? 'de', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories-public'] });
-      showToast('Kategorie gespeichert.');
+      showToast(t('categories.saved'));
       resetForm();
     },
     onError: () => {
-      showToast('Fehler beim Speichern.', 'error');
-      setError('Fehler beim Speichern.');
+      showToast(t('categories.saveError'), 'error');
+      setError(t('categories.saveError'));
     },
   });
 
@@ -54,9 +56,9 @@ export default function CategoriesPage() {
     mutationFn: categoriesApi.delete,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories-public'] });
-      showToast('Kategorie gelöscht.');
+      showToast(t('categories.deleted'));
     },
-    onError: () => showToast('Kategorie konnte nicht gelöscht werden.', 'error'),
+    onError: () => showToast(t('categories.deleteError'), 'error'),
   });
 
   const resetForm = () => {
@@ -88,13 +90,13 @@ export default function CategoriesPage() {
   return (
     <div className="p-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-semibold text-gray-900">Kategorien</h1>
+        <h1 className="text-xl font-semibold text-gray-900">{t('categories.title')}</h1>
         {!showForm && (
           <button
             onClick={() => setShowForm(true)}
             className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
           >
-            Neue Kategorie
+            {t('categories.new')}
           </button>
         )}
       </div>
@@ -105,13 +107,13 @@ export default function CategoriesPage() {
           className="bg-white rounded-xl border border-gray-200 p-5 mb-6 shadow-sm"
         >
           <h2 className="text-sm font-medium text-gray-700 mb-4">
-            {editing ? 'Kategorie bearbeiten' : 'Neue Kategorie'}
+            {editing ? t('categories.editTitle') : t('categories.new')}
           </h2>
           {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
           <div className="space-y-3">
             <input
               type="text"
-              placeholder="Name *"
+              placeholder={t('categories.name')}
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               required
@@ -120,7 +122,7 @@ export default function CategoriesPage() {
             />
             <input
               type="text"
-              placeholder="Beschreibung"
+              placeholder={t('categories.description')}
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -132,14 +134,14 @@ export default function CategoriesPage() {
               disabled={isSaving}
               className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg"
             >
-              {isSaving ? 'Speichern…' : 'Speichern'}
+              {isSaving ? t('common.saving') : t('common.save')}
             </button>
             <button
               type="button"
               onClick={resetForm}
               className="text-sm text-gray-500 hover:text-gray-700 px-3 py-2"
             >
-              Abbrechen
+              {t('common.cancel')}
             </button>
           </div>
         </form>
@@ -147,9 +149,9 @@ export default function CategoriesPage() {
 
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         {isLoading ? (
-          <p className="p-4 text-sm text-gray-400">Laden…</p>
+          <p className="p-4 text-sm text-gray-400">{t('common.loading')}</p>
         ) : categories.length === 0 ? (
-          <p className="p-8 text-center text-sm text-gray-400">Keine Kategorien vorhanden.</p>
+          <p className="p-8 text-center text-sm text-gray-400">{t('categories.empty')}</p>
         ) : (
           <ul className="divide-y divide-gray-100">
             {categories.map((cat) => (
@@ -166,17 +168,17 @@ export default function CategoriesPage() {
                     onClick={() => handleEdit(cat)}
                     className="text-xs text-blue-600 hover:text-blue-800"
                   >
-                    Bearbeiten
+                    {t('common.edit')}
                   </button>
                   <button
                     onClick={() => {
-                      if (confirm(`Kategorie "${cat.name}" löschen?`)) {
+                      if (confirm(t('categories.confirmDelete', { name: cat.name }))) {
                         deleteMutation.mutate(cat.id);
                       }
                     }}
                     className="text-xs text-red-500 hover:text-red-700"
                   >
-                    Löschen
+                    {t('common.delete')}
                   </button>
                 </div>
               </li>

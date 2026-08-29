@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { mediaApi } from '../api/media';
 import { useToast } from '../components/Toast';
@@ -12,6 +13,7 @@ function formatBytes(bytes: number): string {
 export default function MediaPage() {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
+  const { t } = useTranslation();
   const fileRef = useRef<HTMLInputElement>(null);
   const [page, setPage] = useState(0);
   const [uploading, setUploading] = useState(false);
@@ -26,9 +28,9 @@ export default function MediaPage() {
     mutationFn: mediaApi.delete,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['media'] });
-      showToast('Datei gelöscht.');
+      showToast(t('media.deleted'));
     },
-    onError: () => showToast('Datei konnte nicht gelöscht werden.', 'error'),
+    onError: () => showToast(t('media.deleteError'), 'error'),
   });
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -39,10 +41,10 @@ export default function MediaPage() {
     try {
       await mediaApi.upload(file);
       queryClient.invalidateQueries({ queryKey: ['media'] });
-      showToast('Datei hochgeladen.');
+      showToast(t('media.uploaded'));
     } catch {
-      setError('Upload fehlgeschlagen. Nur Bilder und PDFs erlaubt (max. 10 MB).');
-      showToast('Upload fehlgeschlagen.', 'error');
+      setError(t('media.uploadHint'));
+      showToast(t('media.uploadFailed'), 'error');
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = '';
@@ -52,7 +54,7 @@ export default function MediaPage() {
   return (
     <div className="p-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-semibold text-gray-900">Medien</h1>
+        <h1 className="text-xl font-semibold text-gray-900">{t('media.title')}</h1>
         <div>
           <input
             ref={fileRef}
@@ -66,7 +68,7 @@ export default function MediaPage() {
             disabled={uploading}
             className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
           >
-            {uploading ? 'Hochladen…' : 'Datei hochladen'}
+            {uploading ? t('media.uploading') : t('media.upload')}
           </button>
         </div>
       </div>
@@ -76,10 +78,10 @@ export default function MediaPage() {
       )}
 
       {isLoading ? (
-        <p className="text-sm text-gray-400">Laden…</p>
+        <p className="text-sm text-gray-400">{t('common.loading')}</p>
       ) : data?.content.length === 0 ? (
         <div className="text-center py-16 text-gray-400 text-sm">
-          Noch keine Medien hochgeladen.
+          {t('media.empty')}
         </div>
       ) : (
         <>
@@ -115,17 +117,17 @@ export default function MediaPage() {
                       rel="noreferrer"
                       className="text-xs text-blue-600 hover:text-blue-800"
                     >
-                      Öffnen
+                      {t('common.open')}
                     </a>
                     <button
                       onClick={() => {
-                        if (confirm('Datei löschen?')) {
+                        if (confirm(t('media.confirmDelete'))) {
                           deleteMutation.mutate(media.id);
                         }
                       }}
                       className="text-xs text-red-500 hover:text-red-700"
                     >
-                      Löschen
+                      {t('common.delete')}
                     </button>
                   </div>
                 </div>
@@ -140,7 +142,7 @@ export default function MediaPage() {
                 disabled={page === 0}
                 className="text-xs px-3 py-1.5 border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-gray-50"
               >
-                Zurück
+                {t('common.prev')}
               </button>
               <span className="text-xs text-gray-600">
                 {page + 1} / {data.totalPages}
@@ -150,7 +152,7 @@ export default function MediaPage() {
                 disabled={page >= data.totalPages - 1}
                 className="text-xs px-3 py-1.5 border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-gray-50"
               >
-                Weiter
+                {t('common.next')}
               </button>
             </div>
           )}

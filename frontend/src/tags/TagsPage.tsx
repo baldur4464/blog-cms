@@ -1,4 +1,5 @@
 import { type FormEvent, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { tagsApi, type TagResponse } from '../api/tags';
 import { useToast } from '../components/Toast';
@@ -6,6 +7,7 @@ import { useToast } from '../components/Toast';
 export default function TagsPage() {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
+  const { t, i18n } = useTranslation();
   const [editing, setEditing] = useState<TagResponse | null>(null);
   const [name, setName] = useState('');
   const [showForm, setShowForm] = useState(false);
@@ -20,26 +22,26 @@ export default function TagsPage() {
     mutationFn: tagsApi.create,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tags-public'] });
-      showToast('Tag erstellt.');
+      showToast(t('tags.created'));
       reset();
     },
     onError: () => {
-      showToast('Name bereits vergeben.', 'error');
-      setError('Name bereits vergeben.');
+      showToast(t('tags.nameTaken'), 'error');
+      setError(t('tags.nameTaken'));
     },
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, name }: { id: string; name: string }) =>
-      tagsApi.update(id, { name }),
+      tagsApi.upsertTranslation(id, i18n.resolvedLanguage ?? 'de', { name }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tags-public'] });
-      showToast('Tag gespeichert.');
+      showToast(t('tags.saved'));
       reset();
     },
     onError: () => {
-      showToast('Fehler beim Speichern.', 'error');
-      setError('Fehler beim Speichern.');
+      showToast(t('tags.saveError'), 'error');
+      setError(t('tags.saveError'));
     },
   });
 
@@ -47,9 +49,9 @@ export default function TagsPage() {
     mutationFn: tagsApi.delete,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tags-public'] });
-      showToast('Tag gelöscht.');
+      showToast(t('tags.deleted'));
     },
-    onError: () => showToast('Tag konnte nicht gelöscht werden.', 'error'),
+    onError: () => showToast(t('tags.deleteError'), 'error'),
   });
 
   const reset = () => {
@@ -81,13 +83,13 @@ export default function TagsPage() {
   return (
     <div className="p-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-semibold text-gray-900">Tags</h1>
+        <h1 className="text-xl font-semibold text-gray-900">{t('tags.title')}</h1>
         {!showForm && (
           <button
             onClick={() => setShowForm(true)}
             className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
           >
-            Neuer Tag
+            {t('tags.new')}
           </button>
         )}
       </div>
@@ -98,12 +100,12 @@ export default function TagsPage() {
           className="bg-white rounded-xl border border-gray-200 p-5 mb-6 shadow-sm"
         >
           <h2 className="text-sm font-medium text-gray-700 mb-3">
-            {editing ? 'Tag bearbeiten' : 'Neuer Tag'}
+            {editing ? t('tags.editTitle') : t('tags.new')}
           </h2>
           {error && <p className="text-red-500 text-sm mb-2">{error}</p>}
           <input
             type="text"
-            placeholder="Name *"
+            placeholder={t('tags.name')}
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
@@ -116,14 +118,14 @@ export default function TagsPage() {
               disabled={isSaving}
               className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg"
             >
-              {isSaving ? 'Speichern…' : 'Speichern'}
+              {isSaving ? t('common.saving') : t('common.save')}
             </button>
             <button
               type="button"
               onClick={reset}
               className="text-sm text-gray-500 hover:text-gray-700 px-3 py-2"
             >
-              Abbrechen
+              {t('common.cancel')}
             </button>
           </div>
         </form>
@@ -131,9 +133,9 @@ export default function TagsPage() {
 
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         {isLoading ? (
-          <p className="p-4 text-sm text-gray-400">Laden…</p>
+          <p className="p-4 text-sm text-gray-400">{t('common.loading')}</p>
         ) : tags.length === 0 ? (
-          <p className="p-8 text-center text-sm text-gray-400">Keine Tags vorhanden.</p>
+          <p className="p-8 text-center text-sm text-gray-400">{t('tags.empty')}</p>
         ) : (
           <ul className="divide-y divide-gray-100">
             {tags.map((tag) => (
@@ -147,17 +149,17 @@ export default function TagsPage() {
                     onClick={() => handleEdit(tag)}
                     className="text-xs text-blue-600 hover:text-blue-800"
                   >
-                    Bearbeiten
+                    {t('common.edit')}
                   </button>
                   <button
                     onClick={() => {
-                      if (confirm(`Tag "${tag.name}" löschen?`)) {
+                      if (confirm(t('tags.confirmDelete', { name: tag.name }))) {
                         deleteMutation.mutate(tag.id);
                       }
                     }}
                     className="text-xs text-red-500 hover:text-red-700"
                   >
-                    Löschen
+                    {t('common.delete')}
                   </button>
                 </div>
               </li>

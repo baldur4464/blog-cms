@@ -1,15 +1,9 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { postsApi, type PostStatus } from '../api/posts';
 import { useToast } from '../components/Toast';
-
-const STATUS_LABELS: Record<PostStatus, string> = {
-  DRAFT: 'Entwurf',
-  REVIEW: 'Review',
-  PUBLISHED: 'Veröffentlicht',
-  ARCHIVED: 'Archiviert',
-};
 
 const STATUS_COLORS: Record<PostStatus, string> = {
   DRAFT: 'bg-gray-100 text-gray-700',
@@ -22,6 +16,7 @@ export default function PostListPage() {
   const [page, setPage] = useState(0);
   const queryClient = useQueryClient();
   const { showToast } = useToast();
+  const { t, i18n } = useTranslation();
 
   const { data, isLoading } = useQuery({
     queryKey: ['posts', page],
@@ -32,24 +27,24 @@ export default function PostListPage() {
     mutationFn: postsApi.archive,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['posts'] });
-      showToast('Beitrag archiviert.');
+      showToast(t('posts.archived'));
     },
-    onError: () => showToast('Fehler beim Archivieren.', 'error'),
+    onError: () => showToast(t('posts.archiveError'), 'error'),
   });
 
   if (isLoading) {
-    return <div className="p-8 text-gray-500 text-sm">Laden…</div>;
+    return <div className="p-8 text-gray-500 text-sm">{t('common.loading')}</div>;
   }
 
   return (
     <div className="p-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-semibold text-gray-900">Beiträge</h1>
+        <h1 className="text-xl font-semibold text-gray-900">{t('posts.title')}</h1>
         <Link
           to="/posts/new"
           className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
         >
-          Neuer Beitrag
+          {t('posts.new')}
         </Link>
       </div>
 
@@ -57,11 +52,11 @@ export default function PostListPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              <th className="text-left px-4 py-3 font-medium text-gray-600">Titel</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-600">Status</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-600">Autor</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-600">Kategorie</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-600">Erstellt</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-600">{t('posts.colTitle')}</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-600">{t('posts.colStatus')}</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-600">{t('posts.colAuthor')}</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-600">{t('posts.colCategory')}</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-600">{t('posts.colCreated')}</th>
               <th className="px-4 py-3"></th>
             </tr>
           </thead>
@@ -80,25 +75,25 @@ export default function PostListPage() {
                   <span
                     className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[post.status]}`}
                   >
-                    {STATUS_LABELS[post.status]}
+                    {t(`status.${post.status}`)}
                   </span>
                 </td>
                 <td className="px-4 py-3 text-gray-600">{post.authorUsername}</td>
-                <td className="px-4 py-3 text-gray-600">{post.categoryName ?? '—'}</td>
+                <td className="px-4 py-3 text-gray-600">{post.categoryName ?? t('common.none')}</td>
                 <td className="px-4 py-3 text-gray-500">
-                  {new Date(post.createdAt).toLocaleDateString('de-DE')}
+                  {new Date(post.createdAt).toLocaleDateString(i18n.language)}
                 </td>
                 <td className="px-4 py-3 text-right">
                   <button
                     onClick={() => {
-                      if (confirm('Beitrag archivieren?')) {
+                      if (confirm(t('posts.confirmArchive'))) {
                         archiveMutation.mutate(post.id);
                       }
                     }}
                     disabled={post.status === 'ARCHIVED'}
                     className="text-xs text-red-500 hover:text-red-700 disabled:opacity-30 disabled:cursor-not-allowed"
                   >
-                    Archivieren
+                    {t('posts.archive')}
                   </button>
                 </td>
               </tr>
@@ -106,7 +101,7 @@ export default function PostListPage() {
             {data?.content.length === 0 && (
               <tr>
                 <td colSpan={6} className="px-4 py-8 text-center text-gray-400">
-                  Noch keine Beiträge vorhanden.
+                  {t('posts.empty')}
                 </td>
               </tr>
             )}
@@ -116,7 +111,7 @@ export default function PostListPage() {
         {data && data.totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
             <span className="text-xs text-gray-500">
-              {data.totalElements} Beiträge insgesamt
+              {t('posts.total', { n: data.totalElements })}
             </span>
             <div className="flex gap-2">
               <button
@@ -124,7 +119,7 @@ export default function PostListPage() {
                 disabled={page === 0}
                 className="text-xs px-3 py-1.5 border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-gray-50"
               >
-                Zurück
+                {t('common.prev')}
               </button>
               <span className="text-xs px-3 py-1.5 text-gray-600">
                 {page + 1} / {data.totalPages}
@@ -134,7 +129,7 @@ export default function PostListPage() {
                 disabled={page >= data.totalPages - 1}
                 className="text-xs px-3 py-1.5 border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-gray-50"
               >
-                Weiter
+                {t('common.next')}
               </button>
             </div>
           </div>

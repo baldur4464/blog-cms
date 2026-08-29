@@ -1,4 +1,5 @@
 import { type FormEvent, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { usersApi, type UserResponse, type UserRole } from '../api/users';
 import { useAuth } from '../auth/AuthContext';
@@ -17,6 +18,7 @@ export default function UsersPage() {
   const queryClient = useQueryClient();
   const { user: currentUser } = useAuth();
   const { showToast } = useToast();
+  const { t, i18n } = useTranslation();
   const [page, setPage] = useState(0);
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState<CreateForm>({ username: '', email: '', password: '', role: 'AUTHOR' });
@@ -33,14 +35,14 @@ export default function UsersPage() {
     mutationFn: usersApi.create,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
-      showToast('Benutzer erstellt.');
+      showToast(t('users.created'));
       setShowCreate(false);
       setForm({ username: '', email: '', password: '', role: 'AUTHOR' });
       setError('');
     },
     onError: () => {
-      showToast('Benutzername oder E-Mail bereits vergeben.', 'error');
-      setError('Benutzername oder E-Mail bereits vergeben.');
+      showToast(t('users.createError'), 'error');
+      setError(t('users.createError'));
     },
   });
 
@@ -48,20 +50,20 @@ export default function UsersPage() {
     mutationFn: usersApi.deactivate,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
-      showToast('Benutzer deaktiviert.');
+      showToast(t('users.deactivated'));
     },
-    onError: () => showToast('Benutzer konnte nicht deaktiviert werden.', 'error'),
+    onError: () => showToast(t('users.deactivateError'), 'error'),
   });
 
   const resetMutation = useMutation({
     mutationFn: ({ id, newPassword }: { id: string; newPassword: string }) =>
       usersApi.resetPassword(id, { newPassword }),
     onSuccess: () => {
-      showToast('Passwort zurückgesetzt.');
+      showToast(t('users.passwordReset'));
       setResetTarget(null);
       setNewPassword('');
     },
-    onError: () => showToast('Passwort konnte nicht zurückgesetzt werden.', 'error'),
+    onError: () => showToast(t('users.passwordResetError'), 'error'),
   });
 
   const handleCreate = (e: FormEvent) => {
@@ -70,17 +72,17 @@ export default function UsersPage() {
     createMutation.mutate(form);
   };
 
-  if (isLoading) return <div className="p-8 text-sm text-gray-400">Laden…</div>;
+  if (isLoading) return <div className="p-8 text-sm text-gray-400">{t('common.loading')}</div>;
 
   return (
     <div className="p-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-semibold text-gray-900">Benutzer</h1>
+        <h1 className="text-xl font-semibold text-gray-900">{t('users.title')}</h1>
         <button
           onClick={() => setShowCreate(true)}
           className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
         >
-          Neuer Benutzer
+          {t('users.new')}
         </button>
       </div>
 
@@ -89,12 +91,12 @@ export default function UsersPage() {
           onSubmit={handleCreate}
           className="bg-white rounded-xl border border-gray-200 p-5 mb-6 shadow-sm max-w-lg"
         >
-          <h2 className="text-sm font-medium text-gray-700 mb-4">Neuer Benutzer</h2>
+          <h2 className="text-sm font-medium text-gray-700 mb-4">{t('users.createTitle')}</h2>
           {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
           <div className="space-y-3">
             <input
               type="text"
-              placeholder="Benutzername *"
+              placeholder={t('users.username')}
               value={form.username}
               onChange={(e) => setForm({ ...form, username: e.target.value })}
               required
@@ -103,7 +105,7 @@ export default function UsersPage() {
             />
             <input
               type="email"
-              placeholder="E-Mail *"
+              placeholder={t('users.email')}
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
               required
@@ -111,7 +113,7 @@ export default function UsersPage() {
             />
             <input
               type="password"
-              placeholder="Passwort * (min. 8 Zeichen)"
+              placeholder={t('users.password')}
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
               required
@@ -134,14 +136,14 @@ export default function UsersPage() {
               disabled={createMutation.isPending}
               className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg"
             >
-              {createMutation.isPending ? 'Erstellen…' : 'Erstellen'}
+              {createMutation.isPending ? t('users.creating') : t('users.create')}
             </button>
             <button
               type="button"
               onClick={() => { setShowCreate(false); setError(''); }}
               className="text-sm text-gray-500 hover:text-gray-700 px-3 py-2"
             >
-              Abbrechen
+              {t('common.cancel')}
             </button>
           </div>
         </form>
@@ -151,11 +153,11 @@ export default function UsersPage() {
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-6 w-full max-w-sm shadow-xl">
             <h2 className="text-sm font-medium text-gray-700 mb-4">
-              Passwort zurücksetzen für {resetTarget.username}
+              {t('users.resetTitle', { name: resetTarget.username })}
             </h2>
             <input
               type="password"
-              placeholder="Neues Passwort (min. 8 Zeichen)"
+              placeholder={t('users.newPassword')}
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               minLength={8}
@@ -167,13 +169,13 @@ export default function UsersPage() {
                 disabled={newPassword.length < 8 || resetMutation.isPending}
                 className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg"
               >
-                Zurücksetzen
+                {t('users.reset')}
               </button>
               <button
                 onClick={() => { setResetTarget(null); setNewPassword(''); }}
                 className="text-sm text-gray-500 hover:text-gray-700 px-3 py-2"
               >
-                Abbrechen
+                {t('common.cancel')}
               </button>
             </div>
           </div>
@@ -184,10 +186,10 @@ export default function UsersPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              <th className="text-left px-4 py-3 font-medium text-gray-600">Benutzer</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-600">Rolle</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-600">Status</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-600">Erstellt</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-600">{t('users.colUser')}</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-600">{t('users.colRole')}</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-600">{t('users.colStatus')}</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-600">{t('users.colCreated')}</th>
               <th className="px-4 py-3"></th>
             </tr>
           </thead>
@@ -211,11 +213,11 @@ export default function UsersPage() {
                         : 'bg-gray-100 text-gray-500'
                     }`}
                   >
-                    {u.status === 'ACTIVE' ? 'Aktiv' : 'Inaktiv'}
+                    {u.status === 'ACTIVE' ? t('users.active') : t('users.inactive')}
                   </span>
                 </td>
                 <td className="px-4 py-3 text-gray-500">
-                  {new Date(u.createdAt).toLocaleDateString('de-DE')}
+                  {new Date(u.createdAt).toLocaleDateString(i18n.language)}
                 </td>
                 <td className="px-4 py-3 text-right">
                   <div className="flex justify-end gap-3">
@@ -223,18 +225,18 @@ export default function UsersPage() {
                       onClick={() => setResetTarget(u)}
                       className="text-xs text-blue-600 hover:text-blue-800"
                     >
-                      Passwort
+                      {t('users.actionPassword')}
                     </button>
                     {u.id !== currentUser?.userId && u.status === 'ACTIVE' && (
                       <button
                         onClick={() => {
-                          if (confirm(`Benutzer "${u.username}" deaktivieren?`)) {
+                          if (confirm(t('users.confirmDeactivate', { name: u.username }))) {
                             deactivateMutation.mutate(u.id);
                           }
                         }}
                         className="text-xs text-red-500 hover:text-red-700"
                       >
-                        Deaktivieren
+                        {t('users.actionDeactivate')}
                       </button>
                     )}
                   </div>
@@ -246,14 +248,14 @@ export default function UsersPage() {
 
         {data && data.totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
-            <span className="text-xs text-gray-500">{data.totalElements} Benutzer</span>
+            <span className="text-xs text-gray-500">{t('users.total', { n: data.totalElements })}</span>
             <div className="flex gap-2">
               <button
                 onClick={() => setPage((p) => p - 1)}
                 disabled={page === 0}
                 className="text-xs px-3 py-1.5 border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-gray-50"
               >
-                Zurück
+                {t('common.prev')}
               </button>
               <span className="text-xs px-3 py-1.5 text-gray-600">
                 {page + 1} / {data.totalPages}
@@ -263,7 +265,7 @@ export default function UsersPage() {
                 disabled={page >= data.totalPages - 1}
                 className="text-xs px-3 py-1.5 border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-gray-50"
               >
-                Weiter
+                {t('common.next')}
               </button>
             </div>
           </div>
