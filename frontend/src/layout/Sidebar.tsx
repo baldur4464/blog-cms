@@ -1,15 +1,18 @@
 import { NavLink } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/AuthContext';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 const navItems = [
-  { to: '/posts', label: 'Beiträge' },
-  { to: '/categories', label: 'Kategorien' },
-  { to: '/tags', label: 'Tags' },
-  { to: '/media', label: 'Medien' },
+  { to: '/posts', labelKey: 'nav.posts' },
+  { to: '/categories', labelKey: 'nav.categories' },
+  { to: '/tags', labelKey: 'nav.tags' },
+  { to: '/media', labelKey: 'nav.media' },
 ];
 
 export default function Sidebar() {
   const { user, logout } = useAuth();
+  const { t } = useTranslation();
 
   return (
     <aside className="w-56 bg-gray-900 text-gray-300 flex flex-col min-h-screen shrink-0">
@@ -30,7 +33,7 @@ export default function Sidebar() {
               }`
             }
           >
-            {item.label}
+            {t(item.labelKey)}
           </NavLink>
         ))}
         {user?.role === 'ADMIN' && (
@@ -44,19 +47,22 @@ export default function Sidebar() {
               }`
             }
           >
-            Benutzer
+            {t('nav.users')}
           </NavLink>
         )}
       </nav>
 
-      <div className="px-4 py-4 border-t border-gray-700">
-        <p className="text-xs text-gray-500 truncate mb-2">{user?.username}</p>
-        <button
-          onClick={logout}
-          className="text-xs text-gray-400 hover:text-white transition-colors"
-        >
-          Abmelden
-        </button>
+      <div className="px-4 py-4 border-t border-gray-700 space-y-3">
+        <LanguageSwitcher />
+        <div>
+          <p className="text-xs text-gray-500 truncate mb-2">{user?.username}</p>
+          <button
+            onClick={logout}
+            className="text-xs text-gray-400 hover:text-white transition-colors"
+          >
+            {t('common.logout')}
+          </button>
+        </div>
       </div>
     </aside>
   );

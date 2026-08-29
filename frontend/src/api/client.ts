@@ -1,4 +1,5 @@
 import axios from 'axios';
+import i18n from '../i18n';
 
 let accessToken: string | null = null;
 let refreshPromise: Promise<string> | null = null;
@@ -20,6 +21,8 @@ apiClient.interceptors.request.use((config) => {
   if (accessToken) {
     config.headers.Authorization = `Bearer ${accessToken}`;
   }
+  // Lokalisierte Server-Meldungen in der aktuellen UI-Sprache (ADR-018 Kapitel 8).
+  config.headers['Accept-Language'] = i18n.resolvedLanguage ?? i18n.language ?? 'de';
   return config;
 });
 

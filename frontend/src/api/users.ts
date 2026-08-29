@@ -10,6 +10,7 @@ export interface UserResponse {
   email: string;
   role: UserRole;
   status: UserStatus;
+  preferredLocale?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -51,4 +52,9 @@ export const usersApi = {
 
   resetPassword: (id: string, data: ResetPasswordRequest) =>
     apiClient.post(`/admin/v1/users/${id}/reset-password`, data).then(() => undefined),
+
+  setPreferredLocale: (locale: string) =>
+    apiClient
+      .put<UserResponse>('/admin/v1/users/me/preferred-locale', { preferredLocale: locale })
+      .then((r) => r.data),
 };
