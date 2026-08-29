@@ -43,7 +43,7 @@ public class TagService {
     public TagResponse create(TagRequest request) {
         String def = localeService.getDefaultLocale().toLanguageTag();
         if (translationRepository.existsByLocaleAndName(def, request.name())) {
-            throw new ConflictException("Tag already exists: " + request.name());
+            throw ConflictException.of("error.tag.exists", request.name());
         }
         Tag tag = tagRepository.save(Tag.builder().build());
         TagTranslation tr = TagTranslation.builder()
@@ -83,10 +83,10 @@ public class TagService {
         String locale = requireSupportedLocale(localeTag);
         String def = localeService.getDefaultLocale().toLanguageTag();
         if (locale.equals(def)) {
-            throw new BusinessException("Default-locale translation cannot be deleted");
+            throw BusinessException.of("error.translation.defaultProtected");
         }
         TagTranslation tr = translationRepository.findByTag_IdAndLocale(tagId, locale)
-                .orElseThrow(() -> new ResourceNotFoundException("Translation not found: " + locale));
+                .orElseThrow(() -> ResourceNotFoundException.of("error.translation.notFound", locale));
         translationRepository.delete(tr);
     }
 
@@ -98,7 +98,7 @@ public class TagService {
 
     public Tag getOrThrow(UUID id) {
         return tagRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Tag not found: " + id));
+                .orElseThrow(() -> ResourceNotFoundException.of("error.tag.notFound", id));
     }
 
     // ── Helpers ─────────────────────────────────────────────────────────────
@@ -121,7 +121,7 @@ public class TagService {
     private String requireSupportedLocale(String tag) {
         return localeService.match(tag)
                 .map(Locale::toLanguageTag)
-                .orElseThrow(() -> new BusinessException("Unsupported locale: " + tag));
+                .orElseThrow(() -> BusinessException.of("error.locale.unsupported", tag));
     }
 
     private String uniqueSlug(String locale, String base, UUID selfId) {

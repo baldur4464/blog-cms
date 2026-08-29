@@ -43,7 +43,7 @@ public class CategoryService {
     public CategoryResponse create(CategoryRequest request) {
         String def = localeService.getDefaultLocale().toLanguageTag();
         if (translationRepository.existsByLocaleAndName(def, request.name())) {
-            throw new ConflictException("Category already exists: " + request.name());
+            throw ConflictException.of("error.category.exists", request.name());
         }
         Category category = categoryRepository.save(Category.builder().build());
         CategoryTranslation tr = CategoryTranslation.builder()
@@ -85,10 +85,10 @@ public class CategoryService {
         String locale = requireSupportedLocale(localeTag);
         String def = localeService.getDefaultLocale().toLanguageTag();
         if (locale.equals(def)) {
-            throw new BusinessException("Default-locale translation cannot be deleted");
+            throw BusinessException.of("error.translation.defaultProtected");
         }
         CategoryTranslation tr = translationRepository.findByCategory_IdAndLocale(categoryId, locale)
-                .orElseThrow(() -> new ResourceNotFoundException("Translation not found: " + locale));
+                .orElseThrow(() -> ResourceNotFoundException.of("error.translation.notFound", locale));
         translationRepository.delete(tr);
     }
 
@@ -100,7 +100,7 @@ public class CategoryService {
 
     public Category getOrThrow(UUID id) {
         return categoryRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Category not found: " + id));
+                .orElseThrow(() -> ResourceNotFoundException.of("error.category.notFound", id));
     }
 
     // ── Helpers ─────────────────────────────────────────────────────────────
@@ -124,7 +124,7 @@ public class CategoryService {
     private String requireSupportedLocale(String tag) {
         return localeService.match(tag)
                 .map(Locale::toLanguageTag)
-                .orElseThrow(() -> new BusinessException("Unsupported locale: " + tag));
+                .orElseThrow(() -> BusinessException.of("error.locale.unsupported", tag));
     }
 
     private String uniqueSlug(String locale, String base, UUID selfId) {

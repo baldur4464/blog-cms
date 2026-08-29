@@ -76,7 +76,7 @@ public class PostService {
     @Transactional(readOnly = true)
     public PostDetailResponse findPublishedBySlug(String slug, String locale) {
         Post post = postRepository.findBySlugAndLocaleAndStatus(slug, locale, PostStatus.PUBLISHED)
-                .orElseThrow(() -> new ResourceNotFoundException("Post not found: " + slug));
+                .orElseThrow(() -> ResourceNotFoundException.of("error.post.notFound", slug));
         return toPublicDetail(post);
     }
 
@@ -202,7 +202,7 @@ public class PostService {
     private String requireSupportedLocale(String tag) {
         return localeService.match(tag)
                 .map(Locale::toLanguageTag)
-                .orElseThrow(() -> new BusinessException("Unsupported locale: " + tag));
+                .orElseThrow(() -> BusinessException.of("error.locale.unsupported", tag));
     }
 
     /** Resolves the translation group and guards against a duplicate locale (ADR-018 Kapitel 10). */
@@ -216,14 +216,14 @@ public class PostService {
         boolean localeTaken = postRepository.findByTranslationGroupId(groupId).stream()
                 .anyMatch(p -> p.getLocale().equals(locale));
         if (localeTaken) {
-            throw new ConflictException("Translation for locale '" + locale + "' already exists in this group");
+            throw ConflictException.of("error.post.translationExists", locale);
         }
         return groupId;
     }
 
     private void checkOwnershipForAuthor(Post post, User actor) {
         if (actor.getRole() == Role.AUTHOR && !post.getAuthor().getId().equals(actor.getId())) {
-            throw new BusinessException("Authors can only edit their own posts");
+            throw BusinessException.of("error.post.authorOwnership");
         }
     }
 
@@ -239,7 +239,7 @@ public class PostService {
     private Category resolveCategory(UUID categoryId) {
         if (categoryId == null) return null;
         return categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new ResourceNotFoundException("Category not found: " + categoryId));
+                .orElseThrow(() -> ResourceNotFoundException.of("error.category.notFound", categoryId));
     }
 
     private List<Tag> resolveTags(List<UUID> tagIds) {
@@ -249,6 +249,6 @@ public class PostService {
 
     public Post getOrThrow(UUID id) {
         return postRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Post not found: " + id));
+                .orElseThrow(() -> ResourceNotFoundException.of("error.post.notFound", id));
     }
 }

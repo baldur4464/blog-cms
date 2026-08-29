@@ -39,10 +39,10 @@ public class UserService {
     @Transactional
     public UserResponse create(CreateUserRequest request) {
         if (userRepository.existsByUsername(request.username())) {
-            throw new ConflictException("Username already taken: " + request.username());
+            throw ConflictException.of("error.user.usernameTaken", request.username());
         }
         if (userRepository.existsByEmail(request.email())) {
-            throw new ConflictException("Email already registered: " + request.email());
+            throw ConflictException.of("error.user.emailTaken", request.email());
         }
 
         User user = User.builder()
@@ -70,7 +70,7 @@ public class UserService {
     @Transactional
     public void deactivate(UUID id, User currentUser) {
         if (id.equals(currentUser.getId())) {
-            throw new BusinessException("Cannot deactivate your own account");
+            throw BusinessException.of("error.user.selfDeactivate");
         }
         User user = getOrThrow(id);
         user.setStatus(UserStatus.INACTIVE);
@@ -82,7 +82,7 @@ public class UserService {
     public UserResponse setPreferredLocale(UUID id, String localeTag) {
         String locale = localeService.match(localeTag)
                 .map(Locale::toLanguageTag)
-                .orElseThrow(() -> new BusinessException("Unsupported locale: " + localeTag));
+                .orElseThrow(() -> BusinessException.of("error.locale.unsupported", localeTag));
         User user = getOrThrow(id);
         user.setPreferredLocale(locale);
         return UserResponse.from(userRepository.save(user));
@@ -97,6 +97,6 @@ public class UserService {
 
     public User getOrThrow(UUID id) {
         return userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + id));
+                .orElseThrow(() -> ResourceNotFoundException.of("error.user.notFound", id));
     }
 }

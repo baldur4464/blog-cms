@@ -14,8 +14,7 @@ public final class PostStatusTransition {
 
     public static void validate(PostStatus current, PostStatus next, Role actorRole, boolean isOwner) {
         if (current == next) {
-            throw new InvalidStatusTransitionException(
-                    "Post is already in status " + current);
+            throw InvalidStatusTransitionException.of("error.status.sameStatus", current);
         }
 
         boolean allowed = switch (current) {
@@ -36,13 +35,12 @@ public final class PostStatusTransition {
         };
 
         if (!allowed) {
-            throw new InvalidStatusTransitionException(
-                    "Transition " + current + " → " + next + " not allowed for role " + actorRole);
+            throw InvalidStatusTransitionException.of("error.status.notAllowed", current, next, actorRole);
         }
 
         // AUTHOR may only act on own posts
         if (actorRole == Role.AUTHOR && !isOwner) {
-            throw new InvalidStatusTransitionException("Authors can only change status of their own posts");
+            throw InvalidStatusTransitionException.of("error.status.authorOwnership");
         }
     }
 }

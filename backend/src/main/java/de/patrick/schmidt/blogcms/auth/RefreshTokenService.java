@@ -54,16 +54,16 @@ public class RefreshTokenService {
     public User validateAndRotate(String plaintext, String newPlaintext) {
         String hash = sha256(plaintext);
         RefreshToken token = refreshTokenRepository.findByTokenHash(hash)
-                .orElseThrow(() -> new BusinessException("Invalid refresh token"));
+                .orElseThrow(() -> BusinessException.of("error.auth.invalidRefreshToken"));
 
         if (token.isRevoked()) {
             // Suspected token theft — revoke everything
             refreshTokenRepository.revokeAllByUserId(token.getUser().getId());
-            throw new BusinessException("Refresh token already revoked. All sessions invalidated.");
+            throw BusinessException.of("error.auth.refreshRevoked");
         }
 
         if (token.getExpiresAt().isBefore(Instant.now())) {
-            throw new BusinessException("Refresh token expired");
+            throw BusinessException.of("error.auth.refreshExpired");
         }
 
         // Rotate: revoke old, issue new

@@ -21,28 +21,33 @@ public class GlobalExceptionHandler {
 
     private final Messages messages;
 
+    /** Löst einen Message-Key (falls vorhanden) lokalisiert auf, sonst der fertige Text. */
+    private String localize(LocalizedException ex) {
+        return ex.getMessageKey() != null ? messages.get(ex.getMessageKey(), ex.getArgs()) : ex.getMessage();
+    }
+
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(ResourceNotFoundException ex, HttpServletRequest req) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ErrorResponse.of(404, "Not Found", ErrorCode.NOT_FOUND, ex.getMessage(), req.getRequestURI()));
+                .body(ErrorResponse.of(404, "Not Found", ErrorCode.NOT_FOUND, localize(ex), req.getRequestURI()));
     }
 
     @ExceptionHandler(ConflictException.class)
     public ResponseEntity<ErrorResponse> handleConflict(ConflictException ex, HttpServletRequest req) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(ErrorResponse.of(409, "Conflict", ErrorCode.DUPLICATE_RESOURCE, ex.getMessage(), req.getRequestURI()));
+                .body(ErrorResponse.of(409, "Conflict", ErrorCode.DUPLICATE_RESOURCE, localize(ex), req.getRequestURI()));
     }
 
     @ExceptionHandler(InvalidStatusTransitionException.class)
     public ResponseEntity<ErrorResponse> handleStatusTransition(InvalidStatusTransitionException ex, HttpServletRequest req) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(ErrorResponse.of(409, "Conflict", ErrorCode.STATUS_TRANSITION_INVALID, ex.getMessage(), req.getRequestURI()));
+                .body(ErrorResponse.of(409, "Conflict", ErrorCode.STATUS_TRANSITION_INVALID, localize(ex), req.getRequestURI()));
     }
 
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ErrorResponse> handleBusiness(BusinessException ex, HttpServletRequest req) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ErrorResponse.of(400, "Bad Request", ErrorCode.MALFORMED_REQUEST, ex.getMessage(), req.getRequestURI()));
+                .body(ErrorResponse.of(400, "Bad Request", ErrorCode.MALFORMED_REQUEST, localize(ex), req.getRequestURI()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

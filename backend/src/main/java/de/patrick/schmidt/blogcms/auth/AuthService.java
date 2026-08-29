@@ -34,13 +34,13 @@ public class AuthService {
 
     public LoginResponse login(LoginRequest request, HttpServletResponse response) {
         User user = userRepository.findByUsername(request.username())
-                .orElseThrow(() -> new BusinessException("Invalid credentials"));
+                .orElseThrow(() -> BusinessException.of("error.auth.invalidCredentials"));
 
         if (user.getStatus() == UserStatus.INACTIVE) {
-            throw new BusinessException("Account is inactive");
+            throw BusinessException.of("error.auth.accountInactive");
         }
         if (!passwordEncoder.matches(request.password(), user.getPassword())) {
-            throw new BusinessException("Invalid credentials");
+            throw BusinessException.of("error.auth.invalidCredentials");
         }
 
         String accessToken = jwtTokenProvider.generateAccessToken(
@@ -54,7 +54,7 @@ public class AuthService {
     public LoginResponse refresh(HttpServletRequest request, HttpServletResponse response) {
         String oldToken = extractRefreshToken(request);
         if (oldToken == null) {
-            throw new BusinessException("Missing refresh token");
+            throw BusinessException.of("error.auth.missingRefreshToken");
         }
 
         String newPlaintext = generateNewPlaintext();

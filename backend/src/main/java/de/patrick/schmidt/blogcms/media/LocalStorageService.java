@@ -44,7 +44,7 @@ public class LocalStorageService implements StorageService {
             Files.createDirectories(target.getParent());
             file.transferTo(target);
         } catch (IOException e) {
-            throw new BusinessException("Failed to store file: " + e.getMessage());
+            throw BusinessException.of("error.media.storeFailed", e.getMessage());
         }
         return relativePath;
     }
@@ -57,9 +57,9 @@ public class LocalStorageService implements StorageService {
             if (resource.exists() && resource.isReadable()) {
                 return resource;
             }
-            throw new BusinessException("File not found: " + relativePath);
+            throw BusinessException.of("error.media.fileNotFound", relativePath);
         } catch (MalformedURLException e) {
-            throw new BusinessException("Invalid file path: " + relativePath);
+            throw BusinessException.of("error.media.invalidPath", relativePath);
         }
     }
 
@@ -74,11 +74,11 @@ public class LocalStorageService implements StorageService {
 
     private void validateFile(MultipartFile file) {
         if (file.isEmpty()) {
-            throw new BusinessException("Cannot store empty file.");
+            throw BusinessException.of("error.media.emptyFile");
         }
         String contentType = file.getContentType();
         if (contentType == null || !properties.getAllowedTypes().contains(contentType)) {
-            throw new BusinessException("File type not allowed: " + contentType);
+            throw BusinessException.of("error.media.typeNotAllowed", contentType);
         }
     }
 

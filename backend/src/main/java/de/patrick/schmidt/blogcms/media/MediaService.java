@@ -44,7 +44,7 @@ public class MediaService {
     @Transactional
     public void delete(UUID id) {
         Media media = mediaRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Media not found: " + id));
+                .orElseThrow(() -> ResourceNotFoundException.of("error.media.notFound", id));
         storageService.delete("media/" + media.getFilename());
         mediaRepository.deleteById(id);
     }
