@@ -4,6 +4,7 @@ import de.patrick.schmidt.blogcms.common.PageResponse;
 import de.patrick.schmidt.blogcms.common.exception.BusinessException;
 import de.patrick.schmidt.blogcms.common.exception.ConflictException;
 import de.patrick.schmidt.blogcms.common.exception.ResourceNotFoundException;
+import de.patrick.schmidt.blogcms.i18n.LocaleService;
 import de.patrick.schmidt.blogcms.user.dto.*;
 import de.patrick.schmidt.blogcms.user.event.UserCreatedEvent;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Locale;
 import java.util.UUID;
 
 @Service
@@ -21,6 +23,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final LocaleService localeService;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
@@ -72,6 +75,17 @@ public class UserService {
         User user = getOrThrow(id);
         user.setStatus(UserStatus.INACTIVE);
         userRepository.save(user);
+    }
+
+    /** Setzt die persönliche UI-Sprache des Benutzers (ADR-018 Kapitel 3 / ADR-005 Patch). */
+    @Transactional
+    public UserResponse setPreferredLocale(UUID id, String localeTag) {
+        String locale = localeService.match(localeTag)
+                .map(Locale::toLanguageTag)
+                .orElseThrow(() -> new BusinessException("Unsupported locale: " + localeTag));
+        User user = getOrThrow(id);
+        user.setPreferredLocale(locale);
+        return UserResponse.from(userRepository.save(user));
     }
 
     @Transactional

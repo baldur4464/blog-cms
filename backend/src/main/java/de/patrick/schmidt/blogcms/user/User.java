@@ -29,4 +29,8 @@ public class User extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private UserStatus status;
+
+    /** Persönliche Oberflächensprache (ADR-018 Kapitel 3). Null ⇒ Fallback über Locale-Negotiation. */
+    @Column(name = "preferred_locale", length = 35)
+    private String preferredLocale;
 }

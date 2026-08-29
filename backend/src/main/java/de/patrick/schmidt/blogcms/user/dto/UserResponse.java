@@ -11,13 +11,14 @@ public record UserResponse(
         String email,
         String role,
         String status,
+        String preferredLocale,
         Instant createdAt,
         Instant updatedAt
 ) {
     public static UserResponse from(User u) {
         return new UserResponse(
                 u.getId(), u.getUsername(), u.getEmail(),
-                u.getRole().name(), u.getStatus().name(),
+                u.getRole().name(), u.getStatus().name(), u.getPreferredLocale(),
                 u.getCreatedAt(), u.getUpdatedAt()
         );
     }
