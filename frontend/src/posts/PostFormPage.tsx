@@ -1,11 +1,13 @@
 import { type FormEvent, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { postsApi, type PostStatus, type UpdatePostRequest } from '../api/posts';
 import { categoriesApi } from '../api/categories';
 import { tagsApi } from '../api/tags';
 import { useAuth } from '../auth/AuthContext';
 import { useToast } from '../components/Toast';
+import { SUPPORTED_LOCALES } from '../i18n';
 
 const STATUS_LABELS: Record<PostStatus, string> = {
   DRAFT: 'Entwurf',
@@ -37,10 +39,12 @@ export default function PostFormPage() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { showToast } = useToast();
+  const { i18n } = useTranslation();
 
   const [title, setTitle] = useState('');
   const [excerpt, setExcerpt] = useState('');
   const [content, setContent] = useState('');
+  const [locale, setLocale] = useState(i18n.resolvedLanguage ?? 'de');
   const [categoryId, setCategoryId] = useState('');
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [error, setError] = useState('');
@@ -115,7 +119,7 @@ export default function PostFormPage() {
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     setError('');
-    const data = {
+    const base = {
       title,
       content,
       excerpt: excerpt || undefined,
@@ -123,9 +127,9 @@ export default function PostFormPage() {
       tagIds: selectedTagIds,
     };
     if (isEdit) {
-      updateMutation.mutate({ postId: id!, data });
+      updateMutation.mutate({ postId: id!, data: base });
     } else {
-      createMutation.mutate(data);
+      createMutation.mutate({ ...base, locale });
     }
   };
 
@@ -184,6 +188,23 @@ export default function PostFormPage() {
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
+
+        {!isEdit && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Sprache / Language *</label>
+            <select
+              value={locale}
+              onChange={(e) => setLocale(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {SUPPORTED_LOCALES.map((loc) => (
+                <option key={loc} value={loc}>
+                  {loc.toUpperCase()}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-4">
           <div>

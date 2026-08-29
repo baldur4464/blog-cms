@@ -44,11 +44,19 @@ export interface CreatePostRequest {
   title: string;
   content: string;
   excerpt?: string;
+  locale: string;
+  translationOf?: string;
   categoryId?: string;
   tagIds?: string[];
 }
 
-export interface UpdatePostRequest extends CreatePostRequest {}
+export interface UpdatePostRequest {
+  title: string;
+  content: string;
+  excerpt?: string;
+  categoryId?: string;
+  tagIds?: string[];
+}
 
 export const postsApi = {
   list: (params?: { page?: number; size?: number; sort?: string }) =>
