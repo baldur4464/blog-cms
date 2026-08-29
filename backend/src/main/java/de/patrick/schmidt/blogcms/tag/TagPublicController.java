@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Locale;
 
 @RestController
 @RequestMapping("/api/public/v1/tags")
@@ -15,7 +16,7 @@ public class TagPublicController {
     private final TagService tagService;
 
     @GetMapping
-    public ResponseEntity<List<TagResponse>> list() {
-        return ResponseEntity.ok(tagService.findAll());
+    public ResponseEntity<List<TagResponse>> list(Locale locale) {
+        return ResponseEntity.ok(tagService.findAllLocalized(locale.toLanguageTag()));
     }
 }

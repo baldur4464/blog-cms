@@ -15,6 +15,8 @@ import de.patrick.schmidt.blogcms.post.event.PostArchivedEvent;
 import de.patrick.schmidt.blogcms.post.event.PostPublishedEvent;
 import de.patrick.schmidt.blogcms.tag.Tag;
 import de.patrick.schmidt.blogcms.tag.TagRepository;
+import de.patrick.schmidt.blogcms.tag.TagTranslation;
+import de.patrick.schmidt.blogcms.tag.TagTranslationRepository;
 import de.patrick.schmidt.blogcms.user.Role;
 import de.patrick.schmidt.blogcms.user.User;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +42,7 @@ public class PostService {
     private final CategoryRepository categoryRepository;
     private final CategoryTranslationRepository categoryTranslationRepository;
     private final TagRepository tagRepository;
+    private final TagTranslationRepository tagTranslationRepository;
     private final LocaleService localeService;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -58,8 +61,13 @@ public class PostService {
                     summaryMapper());
         }
         if (tagSlug != null) {
+            Optional<UUID> tagId = tagTranslationRepository.findByLocaleAndSlug(locale, tagSlug)
+                    .map(t -> t.getTag().getId());
+            if (tagId.isEmpty()) {
+                return PageResponse.from(Page.empty(pageable), summaryMapper());
+            }
             return PageResponse.from(
-                    postRepository.findAllByStatusAndLocaleAndTags_Slug(PostStatus.PUBLISHED, locale, tagSlug, pageable),
+                    postRepository.findAllByStatusAndLocaleAndTags_Id(PostStatus.PUBLISHED, locale, tagId.get(), pageable),
                     summaryMapper());
         }
         return PageResponse.from(postRepository.findAllByStatusAndLocale(PostStatus.PUBLISHED, locale, pageable), summaryMapper());
@@ -158,13 +166,24 @@ public class PostService {
 
     private PostDetailResponse toDetail(Post post) {
         return PostDetailResponse.from(post,
-                postRepository.findByTranslationGroupId(post.getTranslationGroupId()), categoryLabel(post));
+                postRepository.findByTranslationGroupId(post.getTranslationGroupId()), categoryLabel(post), tagLabels(post));
     }
 
     private PostDetailResponse toPublicDetail(Post post) {
         return PostDetailResponse.from(post,
                 postRepository.findByTranslationGroupIdAndStatus(post.getTranslationGroupId(), PostStatus.PUBLISHED),
-                categoryLabel(post));
+                categoryLabel(post), tagLabels(post));
+    }
+
+    /** Lokalisierte Tag-Labels in der Sprache des Posts, sonst Default-Locale (ADR-018 Kapitel 9). */
+    private List<String> tagLabels(Post post) {
+        String def = localeService.getDefaultLocale().toLanguageTag();
+        return post.getTags().stream()
+                .map(tag -> tagTranslationRepository.findByTag_IdAndLocale(tag.getId(), post.getLocale())
+                        .or(() -> tagTranslationRepository.findByTag_IdAndLocale(tag.getId(), def))
+                        .map(TagTranslation::getName)
+                        .orElse(null))
+                .toList();
     }
 
     /** Lokalisiertes Kategorie-Label in der Sprache des Posts, sonst Default-Locale (ADR-018 Kapitel 9). */

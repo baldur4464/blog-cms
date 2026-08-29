@@ -16,7 +16,7 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
 
     Page<Post> findAllByStatusAndLocaleAndCategory_Id(PostStatus status, String locale, UUID categoryId, Pageable pageable);
 
-    Page<Post> findAllByStatusAndLocaleAndTags_Slug(PostStatus status, String locale, String tagSlug, Pageable pageable);
+    Page<Post> findAllByStatusAndLocaleAndTags_Id(PostStatus status, String locale, UUID tagId, Pageable pageable);
 
     List<Post> findByTranslationGroupId(UUID translationGroupId);
 

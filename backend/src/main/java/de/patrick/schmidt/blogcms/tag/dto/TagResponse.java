@@ -1,11 +1,17 @@
 package de.patrick.schmidt.blogcms.tag.dto;
 
-import de.patrick.schmidt.blogcms.tag.Tag;
-
+import java.util.List;
 import java.util.UUID;
 
-public record TagResponse(UUID id, String name, String slug) {
-    public static TagResponse from(Tag t) {
-        return new TagResponse(t.getId(), t.getName(), t.getSlug());
-    }
-}
+/**
+ * Lokalisierte Tag-Darstellung (ADR-018 Kapitel 9).
+ * {@code translated=false} signalisiert, dass auf die Default-Locale zurückgefallen wurde.
+ */
+public record TagResponse(
+        UUID id,
+        String locale,
+        String name,
+        String slug,
+        boolean translated,
+        List<String> availableLocales
+) {}
