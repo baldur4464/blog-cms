@@ -1,7 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/AuthContext';
-import LanguageSwitcher from '../components/LanguageSwitcher';
 
 const navItems = [
   { to: '/posts', labelKey: 'nav.posts' },
@@ -52,17 +51,14 @@ export default function Sidebar() {
         )}
       </nav>
 
-      <div className="px-4 py-4 border-t border-gray-700 space-y-3">
-        <LanguageSwitcher />
-        <div>
-          <p className="text-xs text-gray-500 truncate mb-2">{user?.username}</p>
-          <button
-            onClick={logout}
-            className="text-xs text-gray-400 hover:text-white transition-colors"
-          >
-            {t('common.logout')}
-          </button>
-        </div>
+      <div className="px-4 py-4 border-t border-gray-700">
+        <p className="text-xs text-gray-500 truncate mb-2">{user?.username}</p>
+        <button
+          onClick={logout}
+          className="text-xs text-gray-400 hover:text-white transition-colors"
+        >
+          {t('common.logout')}
+        </button>
       </div>
     </aside>
   );

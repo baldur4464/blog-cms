@@ -4,6 +4,7 @@ export type PostStatus = 'DRAFT' | 'REVIEW' | 'PUBLISHED' | 'ARCHIVED';
 
 export interface PostSummary {
   id: string;
+  locale: string;
   title: string;
   slug: string;
   excerpt?: string;
@@ -17,6 +18,7 @@ export interface PostSummary {
 
 export interface PostDetail {
   id: string;
+  locale: string;
   title: string;
   slug: string;
   excerpt?: string;

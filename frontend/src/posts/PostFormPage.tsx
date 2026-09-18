@@ -148,6 +148,11 @@ export default function PostFormPage() {
           {isEdit ? t('postForm.editTitle') : t('postForm.newTitle')}
         </h1>
         {post && (
+          <span className="text-xs px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-full uppercase font-semibold">
+            {post.locale}
+          </span>
+        )}
+        {post && (
           <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full">
             {t(`status.${post.status}`)}
           </span>

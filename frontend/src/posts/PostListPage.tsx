@@ -64,12 +64,20 @@ export default function PostListPage() {
             {data?.content.map((post) => (
               <tr key={post.id} className="hover:bg-gray-50">
                 <td className="px-4 py-3">
-                  <Link
-                    to={`/posts/${post.id}/edit`}
-                    className="font-medium text-gray-900 hover:text-blue-600"
-                  >
-                    {post.title}
-                  </Link>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100"
+                      title={t('posts.colLanguage')}
+                    >
+                      {post.locale}
+                    </span>
+                    <Link
+                      to={`/posts/${post.id}/edit`}
+                      className="font-medium text-gray-900 hover:text-blue-600"
+                    >
+                      {post.title}
+                    </Link>
+                  </div>
                 </td>
                 <td className="px-4 py-3">
                   <span

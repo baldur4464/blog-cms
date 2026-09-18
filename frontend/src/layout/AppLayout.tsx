@@ -2,6 +2,7 @@ import { Outlet, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/AuthContext';
 import Sidebar from './Sidebar';
+import Footer from './Footer';
 
 export default function AppLayout() {
   const { user, isLoading } = useAuth();
@@ -22,9 +23,12 @@ export default function AppLayout() {
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
-      <main className="flex-1 overflow-auto">
-        <Outlet />
-      </main>
+      <div className="flex-1 flex flex-col min-h-screen">
+        <main className="flex-1 overflow-auto">
+          <Outlet />
+        </main>
+        <Footer />
+      </div>
     </div>
   );
 }

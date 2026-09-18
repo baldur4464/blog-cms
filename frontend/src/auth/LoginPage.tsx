@@ -2,6 +2,7 @@ import { type FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from './AuthContext';
+import Footer from '../layout/Footer';
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -27,8 +28,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="bg-white rounded-xl shadow-md p-8 w-full max-w-sm">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="flex-1 flex items-center justify-center">
+        <div className="bg-white rounded-xl shadow-md p-8 w-full max-w-sm">
         <h1 className="text-2xl font-semibold text-gray-900 mb-6 text-center">Blog CMS</h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -61,7 +63,9 @@ export default function LoginPage() {
             {loading ? t('login.submitting') : t('login.submit')}
           </button>
         </form>
+        </div>
       </div>
+      <Footer />
     </div>
   );
 }

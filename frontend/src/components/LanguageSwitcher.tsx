@@ -34,7 +34,9 @@ export default function LanguageSwitcher() {
           onClick={() => change(loc)}
           aria-pressed={current === loc}
           className={`text-xs px-1.5 py-0.5 rounded transition-colors ${
-            current === loc ? 'text-white font-semibold' : 'text-gray-500 hover:text-white'
+            current === loc
+              ? 'text-gray-900 font-semibold'
+              : 'text-gray-400 hover:text-gray-700'
           }`}
         >
           {loc.toUpperCase()}
