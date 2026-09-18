@@ -2,11 +2,13 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import axios from 'axios';
 import { authApi } from '../api/auth';
 import { setAccessToken } from '../api/client';
+import i18n from '../i18n';
 
 interface AuthUser {
   userId: string;
   username: string;
   role: string;
+  preferredLocale: string | null;
 }
 
 interface AuthContextValue {
@@ -22,7 +24,7 @@ function decodeToken(token: string): AuthUser {
   const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
   const roles: string[] = payload.roles ?? [];
   const role = roles[0]?.replace('ROLE_', '') ?? 'AUTHOR';
-  return { userId: payload.userId, username: payload.sub, role };
+  return { userId: payload.userId, username: payload.sub, role, preferredLocale: payload.preferredLocale ?? null };
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -51,6 +53,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.addEventListener('auth:expired', handleExpired);
     return () => window.removeEventListener('auth:expired', handleExpired);
   }, []);
+
+  // UI-Sprache aus dem Konto anwenden (ADR-018 Kapitel 3): preferredLocale gewinnt nach Login/Refresh.
+  useEffect(() => {
+    if (user?.preferredLocale && user.preferredLocale !== i18n.resolvedLanguage) {
+      i18n.changeLanguage(user.preferredLocale);
+    }
+  }, [user?.preferredLocale]);
 
   const login = async (username: string, password: string) => {
     const res = await authApi.login({ username, password });

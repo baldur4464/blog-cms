@@ -44,7 +44,7 @@ public class AuthService {
         }
 
         String accessToken = jwtTokenProvider.generateAccessToken(
-                user.getId(), user.getUsername(), user.getRole().name());
+                user.getId(), user.getUsername(), user.getRole().name(), user.getPreferredLocale());
         String refreshToken = refreshTokenService.createToken(user);
 
         addRefreshCookie(response, refreshToken);
@@ -61,7 +61,7 @@ public class AuthService {
         User user = refreshTokenService.validateAndRotate(oldToken, newPlaintext);
 
         String accessToken = jwtTokenProvider.generateAccessToken(
-                user.getId(), user.getUsername(), user.getRole().name());
+                user.getId(), user.getUsername(), user.getRole().name(), user.getPreferredLocale());
 
         addRefreshCookie(response, newPlaintext);
         return new LoginResponse(accessToken);

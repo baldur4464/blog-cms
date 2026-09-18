@@ -23,13 +23,14 @@ public class JwtTokenProvider {
                 securityProperties.getJwt().getSecret().getBytes(StandardCharsets.UTF_8));
     }
 
-    public String generateAccessToken(UUID userId, String username, String role) {
+    public String generateAccessToken(UUID userId, String username, String role, String preferredLocale) {
         long ttlMs = securityProperties.getJwt().getAccessTokenTtl().toMillis();
         return Jwts.builder()
                 .subject(userId.toString())
                 .claim("username", username)
                 .claim("roles", List.of(role))
                 .claim("type", "access")
+                .claim("preferredLocale", preferredLocale) // null ⇒ Claim wird weggelassen
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + ttlMs))
                 .signWith(key())
