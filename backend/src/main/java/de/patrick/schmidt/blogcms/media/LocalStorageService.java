@@ -80,6 +80,9 @@ public class LocalStorageService implements StorageService {
         if (contentType == null || !properties.getAllowedTypes().contains(contentType)) {
             throw BusinessException.of("error.media.typeNotAllowed", contentType);
         }
+        if (file.getSize() > properties.getMaxFileSize().toBytes()) {
+            throw BusinessException.of("error.media.tooLarge", properties.getMaxFileSize().toMegabytes());
+        }
     }
 
     private String getExtension(String filename) {

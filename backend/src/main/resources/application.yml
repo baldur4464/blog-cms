@@ -46,7 +46,9 @@ app:
       same-site: Strict
 
   storage:
+    backend: ${STORAGE_BACKEND:local}
     location: ${STORAGE_LOCATION:./storage}
+    max-file-size: 10MB
     allowed-types:
       - image/jpeg
       - image/png
