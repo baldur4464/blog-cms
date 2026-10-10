@@ -21,6 +21,8 @@ public record PostDetailResponse(
         String categoryName,
         List<UUID> tagIds,
         List<String> tags,
+        UUID coverMediaId,
+        String coverImageUrl,
         Instant publishedAt,
         Instant createdAt,
         Instant updatedAt
@@ -48,6 +50,8 @@ public record PostDetailResponse(
                 categoryName,
                 post.getTags().stream().map(t -> t.getId()).toList(),
                 tagNames,
+                post.getCoverMedia() != null ? post.getCoverMedia().getId() : null,
+                post.getCoverMedia() != null ? post.getCoverMedia().getUrl() : null,
                 post.getPublishedAt(),
                 post.getCreatedAt(),
                 post.getUpdatedAt()

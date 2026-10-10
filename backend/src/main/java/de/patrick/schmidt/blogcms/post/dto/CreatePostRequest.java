@@ -13,5 +13,6 @@ public record CreatePostRequest(
         @NotBlank String locale,
         UUID translationOf,
         UUID categoryId,
-        List<UUID> tagIds
+        List<UUID> tagIds,
+        UUID coverMediaId
 ) {}

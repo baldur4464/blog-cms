@@ -2,6 +2,7 @@ package de.patrick.schmidt.blogcms.post;
 
 import de.patrick.schmidt.blogcms.category.Category;
 import de.patrick.schmidt.blogcms.common.BaseEntity;
+import de.patrick.schmidt.blogcms.media.Media;
 import de.patrick.schmidt.blogcms.tag.Tag;
 import de.patrick.schmidt.blogcms.user.User;
 import jakarta.persistence.*;
@@ -53,6 +54,10 @@ public class Post extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     private Category category;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cover_media_id")
+    private Media coverMedia;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(

@@ -1,5 +1,6 @@
 package de.patrick.schmidt.blogcms.user;
 
+import de.patrick.schmidt.blogcms.user.dto.ChangePasswordRequest;
 import de.patrick.schmidt.blogcms.user.dto.PreferredLocaleRequest;
 import de.patrick.schmidt.blogcms.user.dto.UserResponse;
 import jakarta.validation.Valid;
@@ -24,5 +25,13 @@ public class UserSelfController {
             @Valid @RequestBody PreferredLocaleRequest request,
             @AuthenticationPrincipal User currentUser) {
         return ResponseEntity.ok(userService.setPreferredLocale(currentUser.getId(), request.preferredLocale()));
+    }
+
+    @PutMapping("/password")
+    public ResponseEntity<Void> changePassword(
+            @Valid @RequestBody ChangePasswordRequest request,
+            @AuthenticationPrincipal User currentUser) {
+        userService.changePassword(currentUser.getId(), request);
+        return ResponseEntity.noContent().build();
     }
 }

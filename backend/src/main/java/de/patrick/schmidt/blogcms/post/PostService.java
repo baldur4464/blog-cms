@@ -10,6 +10,8 @@ import de.patrick.schmidt.blogcms.common.exception.BusinessException;
 import de.patrick.schmidt.blogcms.common.exception.ConflictException;
 import de.patrick.schmidt.blogcms.common.exception.ResourceNotFoundException;
 import de.patrick.schmidt.blogcms.i18n.LocaleService;
+import de.patrick.schmidt.blogcms.media.Media;
+import de.patrick.schmidt.blogcms.media.MediaRepository;
 import de.patrick.schmidt.blogcms.post.dto.*;
 import de.patrick.schmidt.blogcms.post.event.PostArchivedEvent;
 import de.patrick.schmidt.blogcms.post.event.PostPublishedEvent;
@@ -43,34 +45,38 @@ public class PostService {
     private final CategoryTranslationRepository categoryTranslationRepository;
     private final TagRepository tagRepository;
     private final TagTranslationRepository tagTranslationRepository;
+    private final MediaRepository mediaRepository;
     private final LocaleService localeService;
     private final ApplicationEventPublisher eventPublisher;
 
     // ── Public API ──────────────────────────────────────────────────────────
 
     @Transactional(readOnly = true)
-    public PageResponse<PostSummaryResponse> findPublished(String categorySlug, String tagSlug, String locale, Pageable pageable) {
+    public PageResponse<PostSummaryResponse> findPublished(String categorySlug, String tagSlug, String locale, String q, Pageable pageable) {
+        UUID categoryId = null;
+        UUID tagId = null;
+
         if (categorySlug != null) {
-            Optional<UUID> categoryId = categoryTranslationRepository.findByLocaleAndSlug(locale, categorySlug)
+            Optional<UUID> found = categoryTranslationRepository.findByLocaleAndSlug(locale, categorySlug)
                     .map(t -> t.getCategory().getId());
-            if (categoryId.isEmpty()) {
+            if (found.isEmpty()) {
                 return PageResponse.from(Page.empty(pageable), summaryMapper());
             }
-            return PageResponse.from(
-                    postRepository.findAllByStatusAndLocaleAndCategory_Id(PostStatus.PUBLISHED, locale, categoryId.get(), pageable),
-                    summaryMapper());
+            categoryId = found.get();
         }
+
         if (tagSlug != null) {
-            Optional<UUID> tagId = tagTranslationRepository.findByLocaleAndSlug(locale, tagSlug)
+            Optional<UUID> found = tagTranslationRepository.findByLocaleAndSlug(locale, tagSlug)
                     .map(t -> t.getTag().getId());
-            if (tagId.isEmpty()) {
+            if (found.isEmpty()) {
                 return PageResponse.from(Page.empty(pageable), summaryMapper());
             }
-            return PageResponse.from(
-                    postRepository.findAllByStatusAndLocaleAndTags_Id(PostStatus.PUBLISHED, locale, tagId.get(), pageable),
-                    summaryMapper());
+            tagId = found.get();
         }
-        return PageResponse.from(postRepository.findAllByStatusAndLocale(PostStatus.PUBLISHED, locale, pageable), summaryMapper());
+
+        return PageResponse.from(
+                postRepository.search(PostStatus.PUBLISHED, locale, categoryId, tagId, q, pageable),
+                summaryMapper());
     }
 
     @Transactional(readOnly = true)
@@ -83,8 +89,8 @@ public class PostService {
     // ── Admin API ────────────────────────────────────────────────────────────
 
     @Transactional(readOnly = true)
-    public PageResponse<PostSummaryResponse> findAll(Pageable pageable) {
-        return PageResponse.from(postRepository.findAll(pageable), summaryMapper());
+    public PageResponse<PostSummaryResponse> findAll(String locale, String q, Pageable pageable) {
+        return PageResponse.from(postRepository.search(null, locale, null, null, q, pageable), summaryMapper());
     }
 
     @Transactional(readOnly = true)
@@ -111,6 +117,7 @@ public class PostService {
                 .author(author)
                 .category(resolveCategory(request.categoryId()))
                 .tags(resolveTags(request.tagIds()))
+                .coverMedia(resolveCoverMedia(request.coverMediaId()))
                 .build();
 
         return toDetail(postRepository.save(post));
@@ -126,6 +133,7 @@ public class PostService {
         post.setContent(request.content());
         post.setCategory(resolveCategory(request.categoryId()));
         post.setTags(resolveTags(request.tagIds()));
+        post.setCoverMedia(resolveCoverMedia(request.coverMediaId()));
 
         return toDetail(postRepository.save(post));
     }
@@ -245,6 +253,12 @@ public class PostService {
     private List<Tag> resolveTags(List<UUID> tagIds) {
         if (tagIds == null || tagIds.isEmpty()) return new ArrayList<>();
         return tagRepository.findAllById(tagIds);
+    }
+
+    private Media resolveCoverMedia(UUID coverMediaId) {
+        if (coverMediaId == null) return null;
+        return mediaRepository.findById(coverMediaId)
+                .orElseThrow(() -> ResourceNotFoundException.of("error.media.notFound", coverMediaId));
     }
 
     public Post getOrThrow(UUID id) {

@@ -89,6 +89,16 @@ public class UserService {
     }
 
     @Transactional
+    public void changePassword(UUID id, ChangePasswordRequest request) {
+        User user = getOrThrow(id);
+        if (!passwordEncoder.matches(request.currentPassword(), user.getPassword())) {
+            throw BusinessException.of("error.user.wrongPassword");
+        }
+        user.setPassword(passwordEncoder.encode(request.newPassword()));
+        userRepository.save(user);
+    }
+
+    @Transactional
     public void resetPassword(UUID id, ResetPasswordRequest request) {
         User user = getOrThrow(id);
         user.setPassword(passwordEncoder.encode(request.newPassword()));

@@ -25,9 +25,10 @@ public class PostPublicController {
             @RequestParam(defaultValue = "publishedAt,desc") String sort,
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String tag,
+            @RequestParam(required = false) String q,
             Locale locale) {
         return ResponseEntity.ok(
-                postService.findPublished(category, tag, locale.toLanguageTag(), PageRequest.of(page, size, parseSort(sort))));
+                postService.findPublished(category, tag, locale.toLanguageTag(), q, PageRequest.of(page, size, parseSort(sort))));
     }
 
     @GetMapping("/{slug}")

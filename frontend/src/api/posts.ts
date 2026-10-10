@@ -11,6 +11,7 @@ export interface PostSummary {
   status: PostStatus;
   authorUsername: string;
   categoryName?: string;
+  coverImageUrl?: string;
   publishedAt?: string;
   createdAt: string;
   updatedAt: string;
@@ -29,6 +30,8 @@ export interface PostDetail {
   categoryName?: string;
   tagIds: string[];
   tags: string[];
+  coverMediaId?: string;
+  coverImageUrl?: string;
   publishedAt?: string;
   createdAt: string;
   updatedAt: string;
@@ -50,6 +53,7 @@ export interface CreatePostRequest {
   translationOf?: string;
   categoryId?: string;
   tagIds?: string[];
+  coverMediaId?: string;
 }
 
 export interface UpdatePostRequest {
@@ -58,10 +62,11 @@ export interface UpdatePostRequest {
   excerpt?: string;
   categoryId?: string;
   tagIds?: string[];
+  coverMediaId?: string;
 }
 
 export const postsApi = {
-  list: (params?: { page?: number; size?: number; sort?: string }) =>
+  list: (params?: { page?: number; size?: number; sort?: string; locale?: string; q?: string }) =>
     apiClient
       .get<PageResponse<PostSummary>>('/admin/v1/posts', { params })
       .then((r) => r.data),

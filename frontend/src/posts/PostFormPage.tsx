@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { postsApi, type PostStatus, type UpdatePostRequest } from '../api/posts';
 import { categoriesApi } from '../api/categories';
 import { tagsApi } from '../api/tags';
+import { mediaApi } from '../api/media';
 import { useAuth } from '../auth/AuthContext';
 import { useToast } from '../components/Toast';
 import { SUPPORTED_LOCALES } from '../i18n';
@@ -40,6 +41,7 @@ export default function PostFormPage() {
   const [locale, setLocale] = useState(i18n.resolvedLanguage ?? 'de');
   const [categoryId, setCategoryId] = useState('');
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const [coverMediaId, setCoverMediaId] = useState('');
   const [error, setError] = useState('');
 
   const { data: post } = useQuery({
@@ -58,6 +60,12 @@ export default function PostFormPage() {
     queryFn: tagsApi.listPublic,
   });
 
+  const { data: mediaPage } = useQuery({
+    queryKey: ['media-picker'],
+    queryFn: () => mediaApi.list({ page: 0, size: 50 }),
+  });
+  const imageItems = mediaPage?.content.filter((m) => m.mimeType.startsWith('image/')) ?? [];
+
   useEffect(() => {
     if (post) {
       setTitle(post.title);
@@ -65,6 +73,7 @@ export default function PostFormPage() {
       setContent(post.content);
       setCategoryId(post.categoryId ?? '');
       setSelectedTagIds(post.tagIds ?? []);
+      setCoverMediaId(post.coverMediaId ?? '');
     }
   }, [post]);
 
@@ -118,6 +127,7 @@ export default function PostFormPage() {
       excerpt: excerpt || undefined,
       categoryId: categoryId || undefined,
       tagIds: selectedTagIds,
+      coverMediaId: coverMediaId || undefined,
     };
     if (isEdit) {
       updateMutation.mutate({ postId: id!, data: base });
@@ -239,6 +249,42 @@ export default function PostFormPage() {
                 </button>
               ))}
             </div>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">{t('postForm.fieldCoverImage')}</label>
+          <div className="flex flex-wrap gap-2 items-start">
+            <button
+              type="button"
+              onClick={() => setCoverMediaId('')}
+              className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${
+                !coverMediaId
+                  ? 'bg-blue-600 text-white border-blue-600'
+                  : 'bg-white text-gray-500 border-gray-300 hover:border-gray-400'
+              }`}
+            >
+              {t('postForm.noCoverImage')}
+            </button>
+            {imageItems.map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                onClick={() => setCoverMediaId(m.id)}
+                title={m.originalName}
+                className={`rounded-lg border-2 overflow-hidden transition-all ${
+                  coverMediaId === m.id
+                    ? 'border-blue-600 shadow-md'
+                    : 'border-transparent hover:border-gray-300'
+                }`}
+              >
+                <img
+                  src={m.url}
+                  alt={m.originalName}
+                  className="h-16 w-16 object-cover"
+                />
+              </button>
+            ))}
           </div>
         </div>
 

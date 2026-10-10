@@ -25,8 +25,10 @@ public class PostAdminController {
     public ResponseEntity<PageResponse<PostSummaryResponse>> list(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "createdAt,desc") String sort) {
-        return ResponseEntity.ok(postService.findAll(PageRequest.of(page, size, parseSort(sort))));
+            @RequestParam(defaultValue = "createdAt,desc") String sort,
+            @RequestParam(required = false) String locale,
+            @RequestParam(required = false) String q) {
+        return ResponseEntity.ok(postService.findAll(locale, q, PageRequest.of(page, size, parseSort(sort))));
     }
 
     @GetMapping("/{id}")

@@ -11,5 +11,6 @@ public record UpdatePostRequest(
         @NotBlank String content,
         @Size(max = 500) String excerpt,
         UUID categoryId,
-        List<UUID> tagIds
+        List<UUID> tagIds,
+        UUID coverMediaId
 ) {}

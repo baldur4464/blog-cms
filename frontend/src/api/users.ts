@@ -32,6 +32,11 @@ export interface ResetPasswordRequest {
   newPassword: string;
 }
 
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
 export const usersApi = {
   list: (params?: { page?: number; size?: number }) =>
     apiClient
@@ -57,4 +62,7 @@ export const usersApi = {
     apiClient
       .put<UserResponse>('/admin/v1/users/me/preferred-locale', { preferredLocale: locale })
       .then((r) => r.data),
+
+  changePassword: (data: ChangePasswordRequest) =>
+    apiClient.put('/admin/v1/users/me/password', data).then(() => undefined),
 };

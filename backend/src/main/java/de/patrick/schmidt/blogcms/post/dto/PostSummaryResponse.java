@@ -14,6 +14,7 @@ public record PostSummaryResponse(
         String status,
         String authorUsername,
         String categoryName,
+        String coverImageUrl,
         Instant publishedAt,
         Instant createdAt,
         Instant updatedAt
@@ -28,6 +29,7 @@ public record PostSummaryResponse(
                 post.getStatus().name(),
                 post.getAuthor().getUsername(),
                 categoryName,
+                post.getCoverMedia() != null ? post.getCoverMedia().getUrl() : null,
                 post.getPublishedAt(),
                 post.getCreatedAt(),
                 post.getUpdatedAt()
